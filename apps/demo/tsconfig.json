@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../../packages/client" },
+    { "path": "../../packages/shared" },
+    { "path": "../../packages/templates" }
+  ]
+}

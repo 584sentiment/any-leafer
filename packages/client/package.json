@@ -28,21 +28,23 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
+    "@leafer-in/editor": "^1.4.0",
+    "@leafer-in/export": "^1.4.0",
+    "@leafer-in/resize": "^1.4.0",
+    "@leafer-in/view": "^1.4.0",
     "@resume-editor/shared": "workspace:*",
     "leafer-ui": "^1.4.0",
-    "@leafer-in/editor": "^1.4.0",
-    "@leafer-in/view": "^1.4.0",
-    "@leafer-in/export": "^1.4.0",
-    "zustand": "^5.0.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "uuid": "^11.0.0"
+    "uuid": "^11.0.0",
+    "zod": "^3.24.0",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.0",

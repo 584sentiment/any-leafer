@@ -252,10 +252,12 @@ export interface ResumeTemplate {
  * AI 模型类型
  */
 export type AIModelType =
-  | 'claude-sonnet-4.5'
-  | 'claude-opus-4.5'
+  | 'deepseek-chat'
+  | 'deepseek-reasoner'
   | 'gpt-4o'
   | 'gpt-4o-mini'
+  | 'claude-sonnet-4.5'
+  | 'claude-opus-4.5'
   | 'gemini-2.0-flash'
   | 'gemini-2.0-pro'
 

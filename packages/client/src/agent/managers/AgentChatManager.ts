@@ -117,10 +117,13 @@ export class AgentChatManager {
   /**
    * 更新最后一条消息
    */
-  updateLastMessage(content: string): void {
+  updateLastMessage(content: string): ChatMessage | null {
     const lastMessage = this.messages[this.messages.length - 1]
     if (lastMessage) {
       lastMessage.content = content
+      lastMessage.timestamp = Date.now() // 更新时间戳
+      return lastMessage
     }
+    return null
   }
 }

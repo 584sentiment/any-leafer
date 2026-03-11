@@ -2,9 +2,12 @@
   "name": "resume-editor-leafer",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "基于 LeaferJS 的图形编辑器/简历编辑器",
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "node scripts/dev.js",
+    "dev:worker": "node scripts/dev.js worker",
+    "dev:demo": "node scripts/dev.js demo",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",

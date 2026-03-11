@@ -39,11 +39,8 @@ const MODES: { value: AgentMode; label: string }[] = [
 ]
 
 const MODELS: { value: AIModelType; label: string }[] = [
-  { value: 'claude-sonnet-4.5', label: 'Claude Sonnet 4.5' },
-  { value: 'claude-opus-4.5', label: 'Claude Opus 4.5' },
-  { value: 'gpt-4o', label: 'GPT-4o' },
-  { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-  { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+  { value: 'deepseek-chat', label: 'DeepSeek Chat' },
+  { value: 'deepseek-reasoner', label: 'DeepSeek Reasoner' },
 ]
 
 export const Toolbar: React.FC<ToolbarProps> = ({

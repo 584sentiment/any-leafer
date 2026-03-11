@@ -65,34 +65,68 @@ export class AgentContextManager {
     const state = this.getCanvasState()
     const selectedElements = this.getSelectedElements()
 
-    let description = `画布状态:\n`
+    let description = `## 画布状态\n`
     description += `- 画布尺寸: ${state.viewport.width}x${state.viewport.height}\n`
     description += `- 元素总数: ${state.elements.length}\n`
     description += `- 选中元素: ${selectedElements.length}个\n`
 
+    // 列出所有元素的详细信息（关键：让 AI 知道每个元素的 ID 和属性）
+    if (state.elements.length > 0) {
+      description += `\n## 画布上的所有元素\n`
+      description += `以下是当前画布上所有元素的详细信息，你可以使用 elementId 来操作它们：\n\n`
+
+      state.elements.forEach((el, index) => {
+        description += `### 元素 ${index + 1} (ID: "${el.id}")\n`
+        description += `- 类型: ${el.type}\n`
+        description += `- 位置: (${el.x}, ${el.y})\n`
+        description += `- 尺寸: ${el.width}x${el.height}\n`
+
+        // 文本元素的额外信息
+        if (el.type === 'text' || el.type === 'heading') {
+          const textEl = el as any
+          description += `- 内容: "${textEl.content}"\n`
+          if (textEl.fontSize) description += `- 字体大小: ${textEl.fontSize}\n`
+          if (textEl.fill) description += `- 颜色: ${textEl.fill}\n`
+          if (textEl.textAlign) description += `- 对齐: ${textEl.textAlign}\n`
+        }
+
+        // 形状元素的额外信息
+        if (el.type === 'rect' || el.type === 'ellipse') {
+          const shapeEl = el as any
+          if (shapeEl.fill) description += `- 填充色: ${shapeEl.fill}\n`
+          if (shapeEl.stroke) description += `- 描边色: ${shapeEl.stroke}\n`
+        }
+
+        // 通用属性
+        if (el.opacity !== undefined && el.opacity !== 1) {
+          description += `- 透明度: ${el.opacity}\n`
+        }
+        if (el.rotation) {
+          description += `- 旋转: ${el.rotation}弧度\n`
+        }
+
+        description += `\n`
+      })
+    }
+
+    // 选中的元素（如果有）
     if (selectedElements.length > 0) {
-      description += `\n选中的元素:\n`
+      description += `## 当前选中的元素\n`
       selectedElements.forEach((el, index) => {
-        description += `${index + 1}. ${el.type} (ID: ${el.id})\n`
+        description += `${index + 1}. ${el.type} (ID: "${el.id}")\n`
         if (el.type === 'text' || el.type === 'heading') {
           const textEl = el as any
           description += `   内容: "${textEl.content.substring(0, 50)}${textEl.content.length > 50 ? '...' : ''}"\n`
         }
       })
+      description += `\n`
     }
 
-    // 元素类型统计
-    const typeCount: Record<string, number> = {}
-    state.elements.forEach((el) => {
-      typeCount[el.type] = (typeCount[el.type] || 0) + 1
-    })
-
-    if (Object.keys(typeCount).length > 0) {
-      description += `\n元素类型分布:\n`
-      Object.entries(typeCount).forEach(([type, count]) => {
-        description += `- ${type}: ${count}个\n`
-      })
-    }
+    // 添加操作提示
+    description += `## 操作提示\n`
+    description += `- 要修改元素，使用 update-element 或 edit-text，并提供正确的 elementId\n`
+    description += `- 要移动元素，使用 move-element，deltaX 和 deltaY 是相对偏移量\n`
+    description += `- 要删除元素，使用 delete-element，elementIds 是 ID 数组\n`
 
     return description
   }

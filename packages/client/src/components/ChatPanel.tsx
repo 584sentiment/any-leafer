@@ -145,6 +145,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             onKeyDown={handleKeyDown}
             placeholder="输入消息..."
             disabled={isProcessing}
+            data-testid="chat-input"
             style={{
               flex: 1,
               padding: '8px 12px',

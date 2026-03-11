@@ -3,8 +3,9 @@
  * 负责画布初始化、元素管理、编辑器功能
  */
 
-import { Leafer, Rect, Text, Ellipse, Line, Image, Group, UI } from 'leafer-ui'
+import { App, Rect, Text, Ellipse, Line, Image, Group, UI, Leafer } from 'leafer-ui'
 import '@leafer-in/editor'
+import '@leafer-in/resize'
 import '@leafer-in/view'
 import '@leafer-in/export'
 
@@ -54,7 +55,7 @@ export interface CreateElementOptions {
  * LeaferJS 画布编辑器
  */
 export class LeaferEditor {
-  private leafer: Leafer | null = null
+  private app: App | null = null
   private config: LeaferEditorConfig
   private elementsMap: Map<string, UI> = new Map()
   private container: HTMLElement
@@ -77,32 +78,39 @@ export class LeaferEditor {
    * 初始化编辑器
    */
   async init(): Promise<void> {
-    this.leafer = new Leafer({
-      view: this.container,
-      width: this.config.width,
-      height: this.config.height,
-      fill: this.config.backgroundColor,
+    return new Promise((resolve, reject) => {
+      try {
+        // 使用 App 替代 Leafer，以支持编辑器功能
+        const app = new App({
+          view: this.container,
+          tree: {},
+          sky: {},
+          editor: this.config.editable ? {} : undefined,
+        })
+        this.app = app
+
+        // 设置背景色和尺寸
+        if (app.tree) {
+          app.tree.fill = this.config.backgroundColor
+          app.tree.width = this.config.width
+          app.tree.height = this.config.height
+        }
+
+        // 配置吸附
+        if (this.config.snap) {
+          this.setupSnap()
+        }
+
+        // 等待 tree 层准备好
+        if (app.tree) {
+          app.tree.waitViewReady(() => resolve())
+        } else {
+          reject(new Error('App tree layer not created'))
+        }
+      } catch (error) {
+        reject(error)
+      }
     })
-
-    // 配置编辑器
-    if (this.config.editable) {
-      this.setupEditor()
-    }
-
-    // 配置吸附
-    if (this.config.snap) {
-      this.setupSnap()
-    }
-  }
-
-  /**
-   * 配置编辑器功能
-   */
-  private setupEditor(): void {
-    if (!this.leafer) return
-
-    // LeaferJS Editor 插件会自动添加选择、变换等功能
-    // 这里可以配置编辑器选项
   }
 
   /**
@@ -114,10 +122,17 @@ export class LeaferEditor {
   }
 
   /**
-   * 获取 Leafer 实例
+   * 获取 App 实例
+   */
+  getApp(): App | null {
+    return this.app
+  }
+
+  /**
+   * 获取 Leafer 实例（兼容旧接口）
    */
   getLeafer(): Leafer | null {
-    return this.leafer
+    return this.app?.tree ?? null
   }
 
   /**
@@ -127,7 +142,9 @@ export class LeaferEditor {
     element: ResumeElement,
     options?: CreateElementOptions
   ): UI | null {
-    if (!this.leafer) return null
+    if (!this.app?.tree) {
+      return null
+    }
 
     const id = options?.id || element.id || uuidv4()
     let leaferElement: UI | null = null
@@ -159,7 +176,7 @@ export class LeaferEditor {
 
     if (leaferElement) {
       leaferElement.id = id
-      this.leafer.add(leaferElement)
+      this.app.tree.add(leaferElement)
       this.elementsMap.set(id, leaferElement)
     }
 
@@ -177,16 +194,18 @@ export class LeaferEditor {
       width: element.width,
       height: element.height,
       text: element.content,
-      fontSize: element.fontSize,
-      fontFamily: element.fontFamily,
+      fontSize: element.fontSize || 16,
+      fontFamily: element.fontFamily || 'Arial',
       fontWeight: element.fontWeight as any,
       fontStyle: element.fontStyle,
-      fill: element.fill,
+      fill: element.fill || '#000000',
       textAlign: element.textAlign,
       rotation: element.rotation,
       opacity: element.opacity,
       visible: element.visible ?? true,
       editable: true,
+      moveable: true,
+      resizable: true,
       zIndex: 0,
     })
   }
@@ -201,13 +220,16 @@ export class LeaferEditor {
       y: element.y,
       width: element.width,
       height: element.height,
-      fill: element.fill,
+      fill: element.fill || '#32cd79',
       stroke: element.stroke,
       strokeWidth: element.strokeWidth,
       cornerRadius: element.cornerRadius,
       rotation: element.rotation,
       opacity: element.opacity,
       visible: element.visible ?? true,
+      editable: true,
+      moveable: true,
+      resizable: true,
     })
   }
 
@@ -221,12 +243,15 @@ export class LeaferEditor {
       y: element.y,
       width: element.width,
       height: element.height,
-      fill: element.fill,
+      fill: element.fill || '#32cd79',
       stroke: element.stroke,
       strokeWidth: element.strokeWidth,
       rotation: element.rotation,
       opacity: element.opacity,
       visible: element.visible ?? true,
+      editable: true,
+      moveable: true,
+      resizable: true,
     })
   }
 
@@ -245,6 +270,9 @@ export class LeaferEditor {
       rotation: element.rotation,
       opacity: element.opacity,
       visible: element.visible ?? true,
+      editable: true,
+      moveable: true,
+      resizable: true,
     })
   }
 
@@ -262,6 +290,9 @@ export class LeaferEditor {
       rotation: element.rotation,
       opacity: element.opacity,
       visible: element.visible ?? true,
+      editable: true,
+      moveable: true,
+      resizable: true,
     })
   }
 
@@ -278,6 +309,9 @@ export class LeaferEditor {
       rotation: element.rotation,
       opacity: element.opacity,
       visible: element.visible ?? true,
+      editable: true,
+      moveable: true,
+      resizable: true,
     })
   }
 
@@ -297,6 +331,9 @@ export class LeaferEditor {
       rotation: element.rotation,
       opacity: element.opacity,
       visible: element.visible ?? true,
+      editable: true,
+      moveable: true,
+      resizable: true,
     })
   }
 
@@ -482,32 +519,41 @@ export class LeaferEditor {
    * 获取选中的元素 ID
    */
   getSelectedElementIds(): string[] {
-    if (!this.leafer) return []
+    if (!this.app?.editor) return []
 
-    // LeaferJS Editor 的选择状态
-    // 这里需要根据实际的 Editor API 来实现
-    return []
+    // 使用 LeaferJS Editor 的选择状态
+    const selectedList = this.app.editor.list
+    return selectedList.map((el: UI) => el.id as string)
   }
 
   /**
    * 选中元素
    */
   selectElements(elementIds: string[]): void {
-    // 实现选择逻辑
+    if (!this.app?.editor) return
+
+    const elements = elementIds
+      .map((id) => this.elementsMap.get(id))
+      .filter((el): el is UI => el !== undefined)
+
+    if (elements.length > 0) {
+      this.app.editor.select(elements)
+    }
   }
 
   /**
    * 清空选择
    */
   clearSelection(): void {
-    // 实现清空选择逻辑
+    if (!this.app?.editor) return
+    this.app.editor.select()
   }
 
   /**
    * 清空画布
    */
   clearCanvas(): void {
-    if (!this.leafer) return
+    if (!this.app?.tree) return
 
     this.elementsMap.forEach((el) => el.remove())
     this.elementsMap.clear()
@@ -517,14 +563,14 @@ export class LeaferEditor {
    * 导出画布
    */
   async export(options: ExportOptions): Promise<Blob> {
-    if (!this.leafer) {
+    if (!this.app?.tree) {
       throw new Error('Editor not initialized')
     }
 
     const { format, quality = 1, scale = 1, backgroundColor } = options
 
     // 使用 Leafer 的导出功能
-    const result = await this.leafer.export(format === 'pdf' ? 'jpg' : format, {
+    const result = await this.app.tree.export(format === 'pdf' ? 'jpg' : format, {
       quality,
       pixelRatio: scale,
       blob: true,
@@ -559,14 +605,14 @@ export class LeaferEditor {
    * 设置视口
    */
   setViewport(viewport: Partial<ViewportState>): void {
-    if (!this.leafer) return
+    if (!this.app?.tree) return
 
     if (viewport.zoom !== undefined) {
-      this.leafer.zoom = viewport.zoom
+      this.app.tree.zoom = viewport.zoom
     }
     if (viewport.x !== undefined || viewport.y !== undefined) {
-      this.leafer.x = viewport.x ?? this.leafer.x
-      this.leafer.y = viewport.y ?? this.leafer.y
+      this.app.tree.x = viewport.x ?? this.app.tree.x
+      this.app.tree.y = viewport.y ?? this.app.tree.y
     }
   }
 
@@ -574,9 +620,9 @@ export class LeaferEditor {
    * 销毁编辑器
    */
   destroy(): void {
-    if (this.leafer) {
-      this.leafer.destroy()
-      this.leafer = null
+    if (this.app) {
+      this.app.destroy()
+      this.app = null
     }
     this.elementsMap.clear()
   }

@@ -4,21 +4,31 @@
  */
 
 import { streamText } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
-import { openai } from '@ai-sdk/openai'
-import { google } from '@ai-sdk/google'
+import { createOpenAI } from '@ai-sdk/openai'
 import type { AIModelType, AgentAction } from '@resume-editor/shared'
 import { AgentActionSchema, ACTION_TYPES } from '@resume-editor/shared'
 import { buildSystemPrompt } from '../prompt/systemPrompt'
 
 /**
+ * 环境变量类型
+ */
+export interface Env {
+  DEEPSEEK_API_KEY?: string
+  OPENAI_API_KEY?: string
+  ANTHROPIC_API_KEY?: string
+  ENVIRONMENT: string
+}
+
+/**
  * 模型配置
  */
 const MODEL_CONFIG: Record<AIModelType, { provider: string; modelId: string }> = {
-  'claude-sonnet-4.5': { provider: 'anthropic', modelId: 'claude-sonnet-4-5-20250514' },
-  'claude-opus-4.5': { provider: 'anthropic', modelId: 'claude-opus-4-5-20250514' },
+  'deepseek-chat': { provider: 'deepseek', modelId: 'deepseek-chat' },
+  'deepseek-reasoner': { provider: 'deepseek', modelId: 'deepseek-reasoner' },
   'gpt-4o': { provider: 'openai', modelId: 'gpt-4o' },
   'gpt-4o-mini': { provider: 'openai', modelId: 'gpt-4o-mini' },
+  'claude-sonnet-4.5': { provider: 'anthropic', modelId: 'claude-sonnet-4-5-20250514' },
+  'claude-opus-4.5': { provider: 'anthropic', modelId: 'claude-opus-4-5-20250514' },
   'gemini-2.0-flash': { provider: 'google', modelId: 'gemini-2.0-flash' },
   'gemini-2.0-pro': { provider: 'google', modelId: 'gemini-2.0-pro-exp-02-05' },
 }
@@ -26,21 +36,28 @@ const MODEL_CONFIG: Record<AIModelType, { provider: string; modelId: string }> =
 /**
  * 获取模型实例
  */
-function getModel(modelType: AIModelType) {
+function getModel(modelType: AIModelType, env?: Env) {
   const config = MODEL_CONFIG[modelType]
   if (!config) {
     throw new Error(`Unknown model: ${modelType}`)
   }
 
   switch (config.provider) {
-    case 'anthropic':
-      return anthropic(config.modelId)
-    case 'openai':
+    case 'deepseek': {
+      const deepseek = createOpenAI({
+        baseURL: 'https://api.deepseek.com',
+        apiKey: env?.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY,
+      })
+      return deepseek(config.modelId)
+    }
+    case 'openai': {
+      const openai = createOpenAI({
+        apiKey: env?.OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+      })
       return openai(config.modelId)
-    case 'google':
-      return google(config.modelId)
+    }
     default:
-      throw new Error(`Unknown provider: ${config.provider}`)
+      throw new Error(`Unsupported provider: ${config.provider}. Currently only DeepSeek and OpenAI are supported.`)
   }
 }
 
@@ -57,11 +74,11 @@ export interface AgentServiceRequest {
 /**
  * 处理聊天请求
  */
-export async function handleChatRequest(request: AgentServiceRequest): Promise<ReadableStream> {
+export async function handleChatRequest(request: AgentServiceRequest, env?: Env): Promise<ReadableStream> {
   const { messages, model, context, mode = 'edit' } = request
 
   // 获取模型
-  const aiModel = getModel(model)
+  const aiModel = getModel(model, env)
 
   // 构建系统提示词
   const systemPrompt = buildSystemPrompt(mode)
@@ -129,21 +146,36 @@ export async function handleChatRequest(request: AgentServiceRequest): Promise<R
 
 /**
  * 从 buffer 中提取完整的 Action
+ * 支持嵌套的 JSON 对象
  */
 function extractActionsFromBuffer(buffer: string): AgentAction[] {
   const actions: AgentAction[] = []
-  const jsonPattern = /\{[^{}]*"_type"\s*:\s*"[^"]+\"[^{}]*\}/g
-  let match
 
-  while ((match = jsonPattern.exec(buffer)) !== null) {
-    try {
-      const parsed = JSON.parse(match[0])
-      const validated = AgentActionSchema.safeParse(parsed)
-      if (validated.success) {
-        actions.push(validated.data)
+  // 查找所有可能的 JSON 对象起始位置
+  let startIndex = 0
+  while (startIndex < buffer.length) {
+    // 查找包含 "_type" 的对象起始位置
+    const objectStart = buffer.indexOf('{', startIndex)
+    if (objectStart === -1) break
+
+    // 尝试从该位置提取完整的 JSON 对象
+    const jsonStr = extractCompleteJson(buffer, objectStart)
+    if (jsonStr) {
+      try {
+        const parsed = JSON.parse(jsonStr)
+        // 检查是否包含 _type 字段
+        if (parsed._type) {
+          const validated = AgentActionSchema.safeParse(parsed)
+          if (validated.success) {
+            actions.push(validated.data)
+          }
+        }
+        startIndex = objectStart + jsonStr.length
+      } catch {
+        startIndex = objectStart + 1
       }
-    } catch {
-      // 忽略解析错误
+    } else {
+      startIndex = objectStart + 1
     }
   }
 
@@ -151,9 +183,74 @@ function extractActionsFromBuffer(buffer: string): AgentAction[] {
 }
 
 /**
+ * 从指定位置提取完整的 JSON 对象
+ */
+function extractCompleteJson(str: string, start: number): string | null {
+  if (str[start] !== '{') return null
+
+  let depth = 0
+  let inString = false
+  let escapeNext = false
+
+  for (let i = start; i < str.length; i++) {
+    const char = str[i]
+
+    if (escapeNext) {
+      escapeNext = false
+      continue
+    }
+
+    if (char === '\\') {
+      escapeNext = true
+      continue
+    }
+
+    if (char === '"') {
+      inString = !inString
+      continue
+    }
+
+    if (!inString) {
+      if (char === '{') {
+        depth++
+      } else if (char === '}') {
+        depth--
+        if (depth === 0) {
+          return str.slice(start, i + 1)
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+/**
  * 清理已处理的 buffer
  */
 function cleanProcessedBuffer(buffer: string): string {
-  // 移除已解析的 JSON 对象
-  return buffer.replace(/\{[^{}]*"_type"\s*:\s*"[^"]+\"[^{}]*\}/g, '')
+  // 移除已解析的完整 JSON 对象
+  let result = buffer
+  let startIndex = 0
+
+  while (startIndex < result.length) {
+    const objectStart = result.indexOf('{', startIndex)
+    if (objectStart === -1) break
+
+    const jsonStr = extractCompleteJson(result, objectStart)
+    if (jsonStr) {
+      try {
+        const parsed = JSON.parse(jsonStr)
+        if (parsed._type) {
+          result = result.slice(0, objectStart) + result.slice(objectStart + jsonStr.length)
+          continue
+        }
+      } catch {
+        // 忽略解析错误
+      }
+    }
+    startIndex = objectStart + 1
+  }
+
+  return result
 }

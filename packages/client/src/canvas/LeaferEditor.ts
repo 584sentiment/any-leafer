@@ -8,6 +8,7 @@ import '@leafer-in/editor'
 import '@leafer-in/resize'
 import '@leafer-in/view'
 import '@leafer-in/export'
+import { DotMatrix } from 'leafer-x-dotwuxian'
 
 import type {
   ResumeElement,
@@ -22,6 +23,24 @@ import type {
   ExportOptions,
 } from '@resume-editor/shared'
 import { v4 as uuidv4 } from 'uuid'
+
+/**
+ * 点阵配置
+ */
+export interface DotMatrixConfig {
+  /** 是否启用点阵 */
+  enabled?: boolean
+  /** 点/线颜色 */
+  dotColor?: string
+  /** 网格间距 */
+  gridGap?: number
+  /** 网格类型 */
+  gridType?: 'dots' | 'lines'
+  /** 最大点/线宽 */
+  maxSize?: number
+  /** 最小点/线宽 */
+  minSize?: number
+}
 
 /**
  * LeaferEditor 配置
@@ -41,6 +60,8 @@ export interface LeaferEditorConfig {
   snap?: boolean
   /** 吸附阈值 */
   snapThreshold?: number
+  /** 点阵配置 */
+  dotMatrix?: DotMatrixConfig
 }
 
 /**
@@ -59,6 +80,7 @@ export class LeaferEditor {
   private config: LeaferEditorConfig
   private elementsMap: Map<string, UI> = new Map()
   private container: HTMLElement
+  private dotMatrix: DotMatrix | null = null
 
   constructor(config: LeaferEditorConfig) {
     this.config = {
@@ -81,24 +103,32 @@ export class LeaferEditor {
     return new Promise((resolve, reject) => {
       try {
         // 使用 App 替代 Leafer，以支持编辑器功能
+        // type: 'design' 启用视口功能（缩放/平移），支持无限点阵插件
         const app = new App({
           view: this.container,
+          type: 'design',
           tree: {},
           sky: {},
           editor: this.config.editable ? {} : undefined,
         })
         this.app = app
 
-        // 设置背景色和尺寸
+        // 设置尺寸（背景色通过 CSS 设置，避免遮挡点阵）
         if (app.tree) {
-          app.tree.fill = this.config.backgroundColor
           app.tree.width = this.config.width
           app.tree.height = this.config.height
+          // 背景色设置为透明，让点阵可见
+          // 实际背景色通过容器 CSS 设置
         }
 
         // 配置吸附
         if (this.config.snap) {
           this.setupSnap()
+        }
+
+        // 配置点阵
+        if (this.config.dotMatrix?.enabled !== false) {
+          this.setupDotMatrix()
         }
 
         // 等待 tree 层准备好
@@ -119,6 +149,51 @@ export class LeaferEditor {
   private setupSnap(): void {
     // 吸附功能配置
     // Leafer-in/editor 提供了吸附支持
+  }
+
+  /**
+   * 配置点阵背景
+   */
+  private setupDotMatrix(): void {
+    if (!this.app) return
+
+    const dotConfig = this.config.dotMatrix || {}
+    this.dotMatrix = new DotMatrix(this.app, {
+      dotColor: dotConfig.dotColor || '#D2D4D7',
+      gridGap: dotConfig.gridGap ?? 45,
+      gridType: dotConfig.gridType || 'dots',
+      maxSize: dotConfig.maxSize ?? 10,
+      minSize: dotConfig.minSize ?? 0.1,
+    })
+    this.dotMatrix.enableDotMatrix(true)
+  }
+
+  /**
+   * 设置点阵显示状态
+   */
+  setDotMatrixEnabled(enabled: boolean): void {
+    this.dotMatrix?.enableDotMatrix(enabled)
+  }
+
+  /**
+   * 获取点阵显示状态
+   */
+  isDotMatrixEnabled(): boolean {
+    return this.dotMatrix !== null
+  }
+
+  /**
+   * 更新点阵配置
+   */
+  updateDotMatrix(config: Partial<DotMatrixConfig>): void {
+    if (this.dotMatrix) {
+      this.dotMatrix.destroy()
+    }
+    this.config.dotMatrix = {
+      ...this.config.dotMatrix,
+      ...config,
+    }
+    this.setupDotMatrix()
   }
 
   /**
@@ -350,7 +425,7 @@ export class LeaferEditor {
 
       // 映射属性名
       const propertyName = this.mapPropertyName(key)
-      ;(element as any)[propertyName] = value
+        ; (element as any)[propertyName] = value
     })
 
     return true
@@ -620,6 +695,10 @@ export class LeaferEditor {
    * 销毁编辑器
    */
   destroy(): void {
+    if (this.dotMatrix) {
+      this.dotMatrix.destroy()
+      this.dotMatrix = null
+    }
     if (this.app) {
       this.app.destroy()
       this.app = null

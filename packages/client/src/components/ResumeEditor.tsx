@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { LeaferCanvas, LeaferCanvasRef } from '../canvas/LeaferCanvas'
+import { LeaferCanvas, LeaferCanvasRef, DotMatrixConfig } from '../canvas/LeaferCanvas'
 import { LeaferAgent, LeaferAgentState } from '../agent/LeaferAgent'
 import { ChatPanel } from './ChatPanel'
 import { Toolbar } from './Toolbar'
@@ -33,6 +33,8 @@ export interface ResumeEditorProps {
   chatWidth?: number
   /** 初始模式 */
   initialMode?: AgentMode
+  /** 点阵配置 */
+  dotMatrix?: DotMatrixConfig
   /** 保存回调 */
   onSave?: (elements: any[]) => void
   /** 导出回调 */
@@ -51,6 +53,7 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
   templates = [],
   chatWidth = 320,
   initialMode = 'edit',
+  dotMatrix = { enabled: true },
   onSave,
   onExport,
   className,
@@ -234,6 +237,7 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
             backgroundColor="#ffffff"
             editable
             snap
+            dotMatrix={dotMatrix}
             onReady={handleEditorReady}
           />
         </div>

@@ -3,7 +3,7 @@
  */
 
 export { LeaferEditor } from './LeaferEditor'
-export type { LeaferEditorConfig, CreateElementOptions } from './LeaferEditor'
+export type { LeaferEditorConfig, CreateElementOptions, DotMatrixConfig } from './LeaferEditor'
 
 export { LeaferCanvas } from './LeaferCanvas'
 export type { LeaferCanvasProps, LeaferCanvasRef } from './LeaferCanvas'

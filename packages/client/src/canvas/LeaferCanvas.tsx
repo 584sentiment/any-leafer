@@ -5,12 +5,14 @@
 import React, {
   useRef,
   useEffect,
-  useCallback,
   forwardRef,
   useImperativeHandle,
 } from 'react'
-import { LeaferEditor, LeaferEditorConfig } from './LeaferEditor'
+import { LeaferEditor, LeaferEditorConfig, DotMatrixConfig } from './LeaferEditor'
 import type { ResumeElement, CanvasState, ExportOptions } from '@resume-editor/shared'
+
+// 重新导出 DotMatrixConfig 以便外部使用
+export type { DotMatrixConfig }
 
 /**
  * LeaferCanvas 组件属性
@@ -26,6 +28,8 @@ export interface LeaferCanvasProps {
   editable?: boolean
   /** 是否启用吸附 */
   snap?: boolean
+  /** 点阵配置 */
+  dotMatrix?: DotMatrixConfig
   /** 初始元素 */
   initialElements?: ResumeElement[]
   /** 元素变化回调 */
@@ -75,6 +79,7 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
       backgroundColor = '#ffffff',
       editable = true,
       snap = true,
+      dotMatrix,
       initialElements = [],
       onElementsChange,
       onSelectionChange,
@@ -105,6 +110,7 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
         backgroundColor,
         editable,
         snap,
+        dotMatrix,
       }
 
       const editor = new LeaferEditor(config)
@@ -185,6 +191,7 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
           overflow: 'hidden',
           border: '1px solid #e0e0e0',
           borderRadius: 4,
+          backgroundColor,
           ...style,
         }}
       />

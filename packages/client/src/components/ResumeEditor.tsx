@@ -47,7 +47,7 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
   canvasWidth = 800,
   canvasHeight = 600,
   apiEndpoint,
-  defaultModel = 'claude-sonnet-4.5',
+  defaultModel = 'deepseek-chat',
   templates = [],
   chatWidth = 320,
   initialMode = 'edit',
@@ -69,59 +69,63 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
 
-  // 初始化 Agent
-  useEffect(() => {
-    const editor = canvasRef.current?.getEditor()
-    if (!editor) return
-
-    const agent = new LeaferAgent({
-      editor,
-      apiEndpoint,
-      defaultModel,
-      templates,
-    })
-
-    agent.setCallbacks({
-      onStateChange: (state) => {
-        setAgentState(state)
-      },
-      onMessage: (message) => {
-        setMessages((prev) => {
-          // 更新或添加消息
-          const index = prev.findIndex((m) => m.id === message.id)
-          if (index >= 0) {
-            const updated = [...prev]
-            updated[index] = message
-            return updated
-          }
-          return [...prev, message]
+  // 处理编辑器初始化完成
+  const handleEditorReady = useCallback(
+    (editor: any) => {
+      try {
+        const agent = new LeaferAgent({
+          editor,
+          apiEndpoint,
+          defaultModel,
+          templates,
         })
-      },
-      onError: (error) => {
-        console.error('Agent error:', error)
-        // 添加错误消息
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `error-${Date.now()}`,
-            role: 'assistant',
-            content: `发生错误: ${error.message}`,
-            timestamp: Date.now(),
+
+        agent.setCallbacks({
+          onStateChange: (state) => {
+            setAgentState(state)
           },
-        ])
-      },
-    })
+          onMessage: (message) => {
+            setMessages((prev) => {
+              // 更新或添加消息
+              const index = prev.findIndex((m) => m.id === message.id)
+              if (index >= 0) {
+                const updated = [...prev]
+                updated[index] = message
+                return updated
+              }
+              return [...prev, message]
+            })
+          },
+          onError: (error) => {
+            // 添加错误消息
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `error-${Date.now()}`,
+                role: 'assistant',
+                content: `发生错误: ${error.message}`,
+                timestamp: Date.now(),
+              },
+            ])
+          },
+        })
 
-    agentRef.current = agent
-
-    return () => {
-      // 清理
-    }
-  }, [apiEndpoint, defaultModel, templates])
+        agentRef.current = agent
+      } catch {
+        // 创建 Agent 失败，忽略错误
+      }
+    },
+    [apiEndpoint, defaultModel, templates]
+  )
 
   // 处理发送消息
   const handleSendMessage = useCallback((content: string) => {
-    agentRef.current?.sendMessage(content)
+    if (!agentRef.current) {
+      return
+    }
+    agentRef.current.sendMessage(content).catch(() => {
+      // 错误已在 onError 回调中处理
+    })
   }, [])
 
   // 处理取消请求
@@ -230,6 +234,7 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
             backgroundColor="#ffffff"
             editable
             snap
+            onReady={handleEditorReady}
           />
         </div>
 

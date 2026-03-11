@@ -216,14 +216,18 @@ export class LeaferAgent {
       },
     }
 
-    await this.requests.sendChatRequest(
-      {
-        messages,
-        model: this.model,
-        context,
-      },
-      callbacks
-    )
+    try {
+      await this.requests.sendChatRequest(
+        {
+          messages,
+          model: this.model,
+          context,
+        },
+        callbacks
+      )
+    } catch (error) {
+      this.handleError(error instanceof Error ? error : new Error(String(error)))
+    }
 
     this.notifyStateChange()
   }
@@ -401,7 +405,6 @@ export class LeaferAgent {
    * 处理错误
    */
   private handleError(error: Error): void {
-    console.error('LeaferAgent error:', error)
     this.callbacks.onError?.(error)
   }
 

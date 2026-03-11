@@ -4,7 +4,7 @@
 
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { handleChatRequest, type AgentServiceRequest } from '../do/AgentService'
+import { handleChatRequest, type AgentServiceRequest, type Env } from '../do/AgentService'
 
 // 创建 Hono 应用
 const app = new Hono()
@@ -24,6 +24,21 @@ app.get('/', (c) => {
   return c.json({ status: 'ok', version: '0.1.0' })
 })
 
+// 获取环境变量（兼容 Cloudflare Workers 和 Node.js）
+function getEnv(c: any): Env | undefined {
+  // Cloudflare Workers 环境
+  if (c.env) {
+    return c.env
+  }
+  // Node.js 环境
+  return {
+    DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    ENVIRONMENT: process.env.ENVIRONMENT || 'development',
+  }
+}
+
 // 聊天接口
 app.post('/chat', async (c) => {
   try {
@@ -35,10 +50,10 @@ app.post('/chat', async (c) => {
 
     const stream = await handleChatRequest({
       messages: body.messages,
-      model: body.model || 'claude-sonnet-4.5',
+      model: body.model || 'deepseek-chat',
       context: body.context,
       mode: body.mode,
-    })
+    }, getEnv(c))
 
     return new Response(stream, {
       headers: {
@@ -48,7 +63,6 @@ app.post('/chat', async (c) => {
       },
     })
   } catch (error) {
-    console.error('Chat error:', error)
     return c.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       500
@@ -60,11 +74,10 @@ app.post('/chat', async (c) => {
 app.get('/models', (c) => {
   return c.json({
     models: [
-      { id: 'claude-sonnet-4.5', name: 'Claude Sonnet 4.5', provider: 'anthropic' },
-      { id: 'claude-opus-4.5', name: 'Claude Opus 4.5', provider: 'anthropic' },
+      { id: 'deepseek-chat', name: 'DeepSeek Chat', provider: 'deepseek' },
+      { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', provider: 'deepseek' },
       { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai' },
       { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'openai' },
-      { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google' },
     ],
   })
 })

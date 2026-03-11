@@ -32,6 +32,8 @@ export interface LeaferCanvasProps {
   onElementsChange?: (elements: ResumeElement[]) => void
   /** 选择变化回调 */
   onSelectionChange?: (selection: string[]) => void
+  /** 编辑器初始化完成回调 */
+  onReady?: (editor: LeaferEditor) => void
   /** 自定义类名 */
   className?: string
   /** 自定义样式 */
@@ -76,16 +78,25 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
       initialElements = [],
       onElementsChange,
       onSelectionChange,
+      onReady,
       className,
       style,
     } = props
 
     const containerRef = useRef<HTMLDivElement>(null)
     const editorRef = useRef<LeaferEditor | null>(null)
+    const onReadyRef = useRef(onReady)
+
+    // 保持 onReady 回调最新
+    useEffect(() => {
+      onReadyRef.current = onReady
+    }, [onReady])
 
     // 初始化编辑器
     useEffect(() => {
-      if (!containerRef.current) return
+      if (!containerRef.current) {
+        return
+      }
 
       const config: LeaferEditorConfig = {
         container: containerRef.current,
@@ -104,6 +115,11 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
         initialElements.forEach((el) => {
           editor.createElement(el, { id: el.id })
         })
+
+        // 通知编辑器已准备就绪
+        onReadyRef.current?.(editor)
+      }).catch(() => {
+        // 编辑器初始化失败，忽略错误
       })
 
       return () => {

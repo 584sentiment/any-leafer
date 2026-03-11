@@ -46,10 +46,12 @@ export class AgentRequestManager {
   async sendChatRequest(request: ChatRequest, callbacks: StreamCallbacks): Promise<void> {
     this.abortController = new AbortController()
 
+    const url = `${this.apiEndpoint}/chat`
+
     try {
       callbacks.onStart?.()
 
-      const response = await fetch(`${this.apiEndpoint}/chat`, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

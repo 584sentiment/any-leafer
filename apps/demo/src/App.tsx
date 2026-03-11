@@ -16,12 +16,12 @@ const App: React.FC = () => {
         canvasWidth={800}
         canvasHeight={1000}
         apiEndpoint={apiEndpoint}
-        defaultModel="claude-sonnet-4.5"
+        defaultModel="deepseek-chat"
         templates={allTemplates}
         chatWidth={360}
         initialMode="edit"
         onExport={(blob, format) => {
-          console.log(`Exported as ${format}:`, blob)
+          // 导出完成回调
         }}
       />
     </div>

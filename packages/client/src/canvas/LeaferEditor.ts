@@ -8,6 +8,8 @@ import '@leafer-in/editor'
 import '@leafer-in/resize'
 import '@leafer-in/view'
 import '@leafer-in/export'
+import '@leafer-in/viewport'
+import '@leafer-in/text-editor'
 import { DotMatrix } from 'leafer-x-dotwuxian'
 
 import type {
@@ -82,6 +84,17 @@ export class LeaferEditor {
   private container: HTMLElement
   private dotMatrix: DotMatrix | null = null
 
+  // 平移模式相关
+  private isPanModeEnabled: boolean = false
+  private isPanning: boolean = false
+  private panStartX: number = 0
+  private panStartY: number = 0
+  private panStartCanvasX: number = 0
+  private panStartCanvasY: number = 0
+  private boundHandlePanMouseDown: (e: MouseEvent) => void
+  private boundHandlePanMouseMove: (e: MouseEvent) => void
+  private boundHandlePanMouseUp: (e: MouseEvent) => void
+
   constructor(config: LeaferEditorConfig) {
     this.config = {
       editable: true,
@@ -94,6 +107,11 @@ export class LeaferEditor {
       typeof config.container === 'string'
         ? document.querySelector(config.container)!
         : config.container
+
+    // 绑定平移事件处理函数
+    this.boundHandlePanMouseDown = this.handlePanMouseDown.bind(this)
+    this.boundHandlePanMouseMove = this.handlePanMouseMove.bind(this)
+    this.boundHandlePanMouseUp = this.handlePanMouseUp.bind(this)
   }
 
   /**
@@ -692,9 +710,169 @@ export class LeaferEditor {
   }
 
   /**
+   * 获取当前缩放比例
+   */
+  getZoom(): number {
+    if (!this.app?.tree) return 1
+    return this.app.tree.scaleX || 1
+  }
+
+  /**
+   * 设置缩放比例
+   */
+  setZoom(zoom: number): void {
+    if (!this.app?.tree) return
+    this.app.tree.scaleX = zoom
+    this.app.tree.scaleY = zoom
+  }
+
+  /**
+   * 放大
+   */
+  zoomIn(step: number = 0.1): void {
+    const currentZoom = this.getZoom()
+    this.setZoom(Math.min(currentZoom + step, 2))
+  }
+
+  /**
+   * 缩小
+   */
+  zoomOut(step: number = 0.1): void {
+    const currentZoom = this.getZoom()
+    this.setZoom(Math.max(currentZoom - step, 0.25))
+  }
+
+  /**
+   * 重置缩放
+   */
+  resetZoom(): void {
+    this.setZoom(1)
+  }
+
+  /**
+   * 设置平移模式
+   * 当启用平移模式时，禁用元素选择，允许拖动画布
+   */
+  setPanMode(enabled: boolean): void {
+    if (!this.app) return
+
+    this.isPanModeEnabled = enabled
+
+    if (enabled) {
+      // 清空选择
+      this.clearSelection()
+      // 禁用编辑器的选择功能
+      if (this.app.editor) {
+        this.app.editor.disabled = true
+        // 禁用选择器（包括框选功能）
+        const editorConfig = this.app.editor.config as any
+        if (editorConfig) {
+          editorConfig.selector = false
+        }
+      }
+      // 在捕获阶段添加事件监听，以便在 LeaferJS 处理之前拦截事件
+      this.container.addEventListener('mousedown', this.boundHandlePanMouseDown, true)
+      // 设置鼠标样式为抓手
+      this.container.style.cursor = 'grab'
+    } else {
+      // 恢复编辑器功能
+      if (this.app.editor) {
+        this.app.editor.disabled = false
+        // 恢复选择器
+        const editorConfig = this.app.editor.config as any
+        if (editorConfig) {
+          editorConfig.selector = true
+        }
+      }
+      // 移除平移事件监听
+      this.removePanListeners()
+      // 恢复默认鼠标样式
+      this.container.style.cursor = 'default'
+    }
+  }
+
+  /**
+   * 移除平移事件监听
+   */
+  private removePanListeners(): void {
+    this.container.removeEventListener('mousedown', this.boundHandlePanMouseDown, true)
+    document.removeEventListener('mousemove', this.boundHandlePanMouseMove)
+    document.removeEventListener('mouseup', this.boundHandlePanMouseUp)
+    this.isPanning = false
+  }
+
+  /**
+   * 处理平移模式下的鼠标按下
+   */
+  private handlePanMouseDown(e: MouseEvent): void {
+    if (!this.isPanModeEnabled || !this.app?.tree) return
+
+    // 只响应左键
+    if (e.button !== 0) return
+
+    // 阻止事件传递到 LeaferJS，防止框选
+    e.stopPropagation()
+    e.preventDefault()
+
+    this.isPanning = true
+    this.panStartX = e.clientX
+    this.panStartY = e.clientY
+    this.panStartCanvasX = this.app.tree.x || 0
+    this.panStartCanvasY = this.app.tree.y || 0
+
+    // 添加移动和抬起事件监听
+    document.addEventListener('mousemove', this.boundHandlePanMouseMove)
+    document.addEventListener('mouseup', this.boundHandlePanMouseUp)
+
+    // 设置鼠标样式为抓取中
+    this.container.style.cursor = 'grabbing'
+  }
+
+  /**
+   * 处理平移模式下的鼠标移动
+   */
+  private handlePanMouseMove(e: MouseEvent): void {
+    if (!this.isPanning || !this.app?.tree) return
+
+    const deltaX = e.clientX - this.panStartX
+    const deltaY = e.clientY - this.panStartY
+
+    // 更新画布位置
+    this.app.tree.x = this.panStartCanvasX + deltaX
+    this.app.tree.y = this.panStartCanvasY + deltaY
+  }
+
+  /**
+   * 处理平移模式下的鼠标抬起
+   */
+  private handlePanMouseUp(_e: MouseEvent): void {
+    this.isPanning = false
+
+    // 移除移动和抬起事件监听
+    document.removeEventListener('mousemove', this.boundHandlePanMouseMove)
+    document.removeEventListener('mouseup', this.boundHandlePanMouseUp)
+
+    // 恢复鼠标样式为抓手
+    if (this.isPanModeEnabled) {
+      this.container.style.cursor = 'grab'
+    }
+  }
+
+  /**
+   * 获取编辑器是否处于平移模式
+   */
+  isPanMode(): boolean {
+    return this.isPanModeEnabled
+  }
+
+  /**
    * 销毁编辑器
    */
   destroy(): void {
+    // 移除平移事件监听
+    this.removePanListeners()
+    this.container.removeEventListener('mousedown', this.boundHandlePanMouseDown, true)
+
     if (this.dotMatrix) {
       this.dotMatrix.destroy()
       this.dotMatrix = null

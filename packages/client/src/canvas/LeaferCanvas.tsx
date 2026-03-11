@@ -66,6 +66,20 @@ export interface LeaferCanvasRef {
   undo: () => void
   /** 重做 */
   redo: () => void
+  /** 获取缩放比例 */
+  getZoom: () => number
+  /** 设置缩放比例 */
+  setZoom: (zoom: number) => void
+  /** 放大 */
+  zoomIn: (step?: number) => void
+  /** 缩小 */
+  zoomOut: (step?: number) => void
+  /** 重置缩放 */
+  resetZoom: () => void
+  /** 设置平移模式 */
+  setPanMode: (enabled: boolean) => void
+  /** 是否处于平移模式 */
+  isPanMode: () => boolean
 }
 
 /**
@@ -166,6 +180,27 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
       },
       redo: () => {
         // TODO: 实现重做
+      },
+      getZoom: () => {
+        return editorRef.current?.getZoom() ?? 1
+      },
+      setZoom: (zoom: number) => {
+        editorRef.current?.setZoom(zoom)
+      },
+      zoomIn: (step?: number) => {
+        editorRef.current?.zoomIn(step)
+      },
+      zoomOut: (step?: number) => {
+        editorRef.current?.zoomOut(step)
+      },
+      resetZoom: () => {
+        editorRef.current?.resetZoom()
+      },
+      setPanMode: (enabled: boolean) => {
+        editorRef.current?.setPanMode(enabled)
+      },
+      isPanMode: () => {
+        return editorRef.current?.isPanMode() ?? false
       },
     }))
 

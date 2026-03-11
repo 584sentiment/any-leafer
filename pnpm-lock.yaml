@@ -53,16 +53,22 @@ importers:
     dependencies:
       '@leafer-in/editor':
         specifier: ^1.4.0
-        version: 1.12.4(@leafer-in/interface@1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4))(@leafer-in/resize@1.12.4(@leafer-in/interface@1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4))(@leafer-ui/core@1.12.4)(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)
+        version: 1.12.4(@leafer-in/resize@1.12.4(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)
       '@leafer-in/export':
         specifier: ^1.4.0
-        version: 1.12.4(@leafer-in/interface@1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)
+        version: 1.12.4(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)
       '@leafer-in/resize':
         specifier: ^1.4.0
-        version: 1.12.4(@leafer-in/interface@1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)
+        version: 1.12.4(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)
+      '@leafer-in/text-editor':
+        specifier: ^2.0.3
+        version: 2.0.3(@leafer-in/editor@1.12.4(@leafer-in/resize@1.12.4(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4))(@leafer-ui/interface@1.12.4)
       '@leafer-in/view':
         specifier: ^1.4.0
-        version: 1.12.4(@leafer-in/interface@1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)
+        version: 1.12.4(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)
+      '@leafer-in/viewport':
+        specifier: ^2.0.3
+        version: 2.0.3(@leafer-ui/interface@1.12.4)
       '@resume-editor/shared':
         specifier: workspace:*
         version: link:../shared
@@ -71,7 +77,10 @@ importers:
         version: 1.12.4
       leafer-x-dotwuxian:
         specifier: ^0.0.3
-        version: 0.0.3(@leafer-ui/core@1.12.4)(@leafer-ui/interface@1.12.4)
+        version: 0.0.3(@leafer-ui/interface@1.12.4)
+      lucide-react:
+        specifier: ^0.577.0
+        version: 0.577.0(react@18.3.1)
       react:
         specifier: ^18.3.0
         version: 18.3.1
@@ -972,12 +981,27 @@ packages:
       '@leafer-ui/draw': ^1.12.4
       '@leafer-ui/interface': ^1.12.4
 
+  '@leafer-in/text-editor@2.0.3':
+    resolution: {integrity: sha512-IJR+jyWJPL6JTo2YYu4T6+oxgDnvBdblA1az5TxAzgj5HLP2I4Yvj7hwogGAytc7YWAjnH0wkKQmhMS+AoTsRg==}
+    peerDependencies:
+      '@leafer-in/editor': ^2.0.3
+      '@leafer-in/interface': ^2.0.3
+      '@leafer-ui/core': ^2.0.3
+      '@leafer-ui/interface': ^2.0.3
+
   '@leafer-in/view@1.12.4':
     resolution: {integrity: sha512-ocebAdLeBKxk5upkFt++7Hxc68XiLhod4IMQyuPc1V+yLFA3M/+iikNTOJQugJR+FUWj+ubXp9VT3nI+7wcVEA==}
     peerDependencies:
       '@leafer-in/interface': ^1.12.4
       '@leafer-ui/draw': ^1.12.4
       '@leafer-ui/interface': ^1.12.4
+
+  '@leafer-in/viewport@2.0.3':
+    resolution: {integrity: sha512-5rX0knJ8WksNfk7l5CC9ujvqI70lmZX6X/mV4orURyf4Sb8oxnzn0xZ8BHVePbRdHZ4YFHhboVbLEYidLq4cnQ==}
+    peerDependencies:
+      '@leafer-in/interface': ^2.0.3
+      '@leafer-ui/core': ^2.0.3
+      '@leafer-ui/interface': ^2.0.3
 
   '@leafer-ui/app@1.12.4':
     resolution: {integrity: sha512-On5zZGDK4W7n857tVdINk0gLFzL8a+BmGi7RXXrthMaL2GgUG37eF/Yc+3dZy+ILi0tF56/GbV6zjhhoE3UuHw==}
@@ -1756,6 +1780,11 @@ packages:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
 
+  lucide-react@0.577.0:
+    resolution: {integrity: sha512-4LjoFv2eEPwYDPg/CUdBJQSDfPyzXCRrVW1X7jrx/trgxnxkHFjnVZINbzvzxjN70dxychOfg+FTYwBiS3pQ5A==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   magic-string@0.25.9:
     resolution: {integrity: sha512-RmF0AsMzgt25qzqqLc1+MbHmhdx0ojF2Fvs4XnOqz2ZOBXzzkEwc/dJQZCYHAn7v1jbVOjAZfK8msRn4BxO4VQ==}
 
@@ -2056,6 +2085,11 @@ packages:
     resolution: {integrity: sha512-NBgaqBDLQSZlJR4D5XCkQq6noaO0RvIgwm5eYFJYL3bH5dNu8o0UBpq7C5DYnQI8+ybyoHFjT5/icN4LeUYLow==}
     cpu: [arm64]
     os: [darwin]
+
+  turbo-linux-64@2.8.16:
+    resolution: {integrity: sha512-VYPdcCRevI9kR/hr1H1xwXy7QQt/jNKiim1e1mjANBXD2E9VZWMkIL74J1Huad5MbU3/jw7voHOqDPLJPC2p6w==}
+    cpu: [x64]
+    os: [linux]
 
   turbo-linux-arm64@2.8.16:
     resolution: {integrity: sha512-beq8tgUVI3uwkQkXJMiOr/hfxQRw54M3elpBwqgYFfemiK5LhCjjcwO0DkE8GZZfElBIlk+saMAQOZy3885wNQ==}
@@ -2753,17 +2787,14 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@leafer-in/editor@1.12.4(@leafer-in/interface@1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4))(@leafer-in/resize@1.12.4(@leafer-in/interface@1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4))(@leafer-ui/core@1.12.4)(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)':
+  '@leafer-in/editor@1.12.4(@leafer-in/resize@1.12.4(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)':
     dependencies:
-      '@leafer-in/interface': 1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4)
-      '@leafer-in/resize': 1.12.4(@leafer-in/interface@1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)
-      '@leafer-ui/core': 1.12.4
+      '@leafer-in/resize': 1.12.4(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)
       '@leafer-ui/draw': 1.12.4
       '@leafer-ui/interface': 1.12.4
 
-  '@leafer-in/export@1.12.4(@leafer-in/interface@1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)':
+  '@leafer-in/export@1.12.4(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)':
     dependencies:
-      '@leafer-in/interface': 1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4)
       '@leafer-ui/draw': 1.12.4
       '@leafer-ui/interface': 1.12.4
 
@@ -2772,16 +2803,23 @@ snapshots:
       '@leafer-ui/interface': 1.12.4
       '@leafer/interface': 1.12.4
 
-  '@leafer-in/resize@1.12.4(@leafer-in/interface@1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)':
+  '@leafer-in/resize@1.12.4(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)':
     dependencies:
-      '@leafer-in/interface': 1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4)
       '@leafer-ui/draw': 1.12.4
       '@leafer-ui/interface': 1.12.4
 
-  '@leafer-in/view@1.12.4(@leafer-in/interface@1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)':
+  '@leafer-in/text-editor@2.0.3(@leafer-in/editor@1.12.4(@leafer-in/resize@1.12.4(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4))(@leafer-ui/interface@1.12.4)':
     dependencies:
-      '@leafer-in/interface': 1.12.4(@leafer-ui/interface@1.12.4)(@leafer/interface@1.12.4)
+      '@leafer-in/editor': 1.12.4(@leafer-in/resize@1.12.4(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4))(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)
+      '@leafer-ui/interface': 1.12.4
+
+  '@leafer-in/view@1.12.4(@leafer-ui/draw@1.12.4)(@leafer-ui/interface@1.12.4)':
+    dependencies:
       '@leafer-ui/draw': 1.12.4
+      '@leafer-ui/interface': 1.12.4
+
+  '@leafer-in/viewport@2.0.3(@leafer-ui/interface@1.12.4)':
+    dependencies:
       '@leafer-ui/interface': 1.12.4
 
   '@leafer-ui/app@1.12.4':
@@ -3653,9 +3691,8 @@ snapshots:
       '@leafer/interface': 1.12.4
       '@leafer/partner': 1.12.4
 
-  leafer-x-dotwuxian@0.0.3(@leafer-ui/core@1.12.4)(@leafer-ui/interface@1.12.4):
+  leafer-x-dotwuxian@0.0.3(@leafer-ui/interface@1.12.4):
     dependencies:
-      '@leafer-ui/core': 1.12.4
       '@leafer-ui/interface': 1.12.4
 
   lilconfig@3.1.3: {}
@@ -3683,6 +3720,10 @@ snapshots:
   lru-cache@6.0.0:
     dependencies:
       yallist: 4.0.0
+
+  lucide-react@0.577.0(react@18.3.1):
+    dependencies:
+      react: 18.3.1
 
   magic-string@0.25.9:
     dependencies:
@@ -4016,6 +4057,9 @@ snapshots:
   turbo-darwin-arm64@2.8.16:
     optional: true
 
+  turbo-linux-64@2.8.16:
+    optional: true
+
   turbo-linux-arm64@2.8.16:
     optional: true
 
@@ -4029,6 +4073,7 @@ snapshots:
     optionalDependencies:
       turbo-darwin-64: 2.8.16
       turbo-darwin-arm64: 2.8.16
+      turbo-linux-64: 2.8.16
       turbo-linux-arm64: 2.8.16
       turbo-windows-64: 2.8.16
       turbo-windows-arm64: 2.8.16

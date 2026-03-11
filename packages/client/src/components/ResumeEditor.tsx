@@ -3,16 +3,18 @@
  * 整合画布、工具栏和聊天面板
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { LeaferCanvas, LeaferCanvasRef, DotMatrixConfig } from '../canvas/LeaferCanvas'
 import { LeaferAgent, LeaferAgentState } from '../agent/LeaferAgent'
 import { ChatPanel } from './ChatPanel'
 import { Toolbar } from './Toolbar'
+import { ElementToolbar, ToolConfig } from './ElementToolbar'
 import type {
   AgentMode,
   AIModelType,
   ChatMessage,
   ResumeTemplate,
+  ResumeElement,
 } from '@resume-editor/shared'
 
 /**
@@ -71,6 +73,83 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
   })
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [activeTool, setActiveTool] = useState('select')
+  const [zoom, setZoom] = useState(100)
+
+  // 处理元素工具选择
+  const handleToolSelect = useCallback((tool: ToolConfig) => {
+    setActiveTool(tool.id)
+
+    // 处理平移模式
+    if (canvasRef.current) {
+      if (tool.type === 'pan') {
+        canvasRef.current.setPanMode(true)
+      } else {
+        // 其他工具退出平移模式
+        canvasRef.current.setPanMode(false)
+      }
+    }
+  }, [])
+
+  // 处理创建元素
+  const handleCreateElement = useCallback((element: ResumeElement) => {
+    if (canvasRef.current) {
+      canvasRef.current.createElement(element)
+    }
+  }, [])
+
+  // 处理图片上传
+  const handleImageUpload = useCallback((file: File) => {
+    if (!canvasRef.current) return
+
+    // 读取图片并创建元素
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const src = e.target?.result as string
+      const imageElement: ResumeElement = {
+        id: `image-${Date.now()}`,
+        type: 'image',
+        x: 100 + Math.random() * 200,
+        y: 100 + Math.random() * 200,
+        width: 150,
+        height: 150,
+        src,
+      }
+      canvasRef.current?.createElement(imageElement)
+    }
+    reader.readAsDataURL(file)
+  }, [])
+
+  // 处理缩放
+  const handleZoomIn = useCallback(() => {
+    if (canvasRef.current) {
+      canvasRef.current.zoomIn(0.1)
+      const newZoom = canvasRef.current.getZoom() * 100
+      setZoom(newZoom)
+    }
+  }, [])
+
+  const handleZoomOut = useCallback(() => {
+    if (canvasRef.current) {
+      canvasRef.current.zoomOut(0.1)
+      const newZoom = canvasRef.current.getZoom() * 100
+      setZoom(newZoom)
+    }
+  }, [])
+
+  // 同步缩放状态
+  useEffect(() => {
+    const syncZoom = () => {
+      if (canvasRef.current) {
+        const currentZoom = canvasRef.current.getZoom() * 100
+        if (Math.abs(currentZoom - zoom) > 1) {
+          setZoom(currentZoom)
+        }
+      }
+    }
+    const interval = setInterval(syncZoom, 500)
+    return () => clearInterval(interval)
+  }, [zoom])
 
   // 处理编辑器初始化完成
   const handleEditorReady = useCallback(
@@ -219,6 +298,30 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
           overflow: 'hidden',
         }}
       >
+        {/* 左侧元素工具栏 */}
+        <div
+          style={{
+            width: 52,
+            padding: '8px 4px',
+            borderRight: '1px solid #e0e0e0',
+            backgroundColor: '#fafafa',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <ElementToolbar
+            activeTool={activeTool}
+            onToolSelect={handleToolSelect}
+            onCreateElement={handleCreateElement}
+            onImageUpload={handleImageUpload}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            zoom={zoom}
+            vertical
+          />
+        </div>
+
         {/* 画布区域 */}
         <div
           style={{

@@ -38,6 +38,14 @@ export interface LeaferCanvasProps {
   onSelectionChange?: (selection: string[]) => void
   /** 编辑器初始化完成回调 */
   onReady?: (editor: LeaferEditor) => void
+  /** 元素创建回调 */
+  onElementCreated?: (elementId: string) => void
+  /** 元素更新回调（拖动、缩放、旋转结束） */
+  onElementUpdated?: (elementIds: string[]) => void
+  /** 元素删除回调 */
+  onElementDeleted?: (elementIds: string[]) => void
+  /** 文本编辑结束回调 */
+  onTextEditEnd?: (elementId: string) => void
   /** 自定义类名 */
   className?: string
   /** 自定义样式 */
@@ -98,6 +106,10 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
       onElementsChange,
       onSelectionChange,
       onReady,
+      onElementCreated,
+      onElementUpdated,
+      onElementDeleted,
+      onTextEditEnd,
       className,
       style,
     } = props
@@ -105,11 +117,31 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
     const containerRef = useRef<HTMLDivElement>(null)
     const editorRef = useRef<LeaferEditor | null>(null)
     const onReadyRef = useRef(onReady)
+    const onElementCreatedRef = useRef(onElementCreated)
+    const onElementUpdatedRef = useRef(onElementUpdated)
+    const onElementDeletedRef = useRef(onElementDeleted)
+    const onTextEditEndRef = useRef(onTextEditEnd)
 
-    // 保持 onReady 回调最新
+    // 保持回调最新
     useEffect(() => {
       onReadyRef.current = onReady
     }, [onReady])
+
+    useEffect(() => {
+      onElementCreatedRef.current = onElementCreated
+    }, [onElementCreated])
+
+    useEffect(() => {
+      onElementUpdatedRef.current = onElementUpdated
+    }, [onElementUpdated])
+
+    useEffect(() => {
+      onElementDeletedRef.current = onElementDeleted
+    }, [onElementDeleted])
+
+    useEffect(() => {
+      onTextEditEndRef.current = onTextEditEnd
+    }, [onTextEditEnd])
 
     // 初始化编辑器
     useEffect(() => {
@@ -125,6 +157,18 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
         editable,
         snap,
         dotMatrix,
+        onElementCreated: (elementId: string) => {
+          onElementCreatedRef.current?.(elementId)
+        },
+        onElementUpdated: (elementIds: string[]) => {
+          onElementUpdatedRef.current?.(elementIds)
+        },
+        onElementDeleted: (elementIds: string[]) => {
+          onElementDeletedRef.current?.(elementIds)
+        },
+        onTextEditEnd: (elementId: string) => {
+          onTextEditEndRef.current?.(elementId)
+        },
       }
 
       const editor = new LeaferEditor(config)

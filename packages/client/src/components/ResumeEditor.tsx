@@ -137,6 +137,30 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
     }
   }, [])
 
+  // 处理元素创建 - 保存历史
+  const handleElementCreated = useCallback((_elementId: string) => {
+    // 元素创建后保存历史
+    agentRef.current?.saveHistory('创建元素')
+  }, [])
+
+  // 处理元素更新（拖动、缩放、旋转） - 保存历史
+  const handleElementUpdated = useCallback((_elementIds: string[]) => {
+    // 元素更新后保存历史
+    agentRef.current?.saveHistory('移动/缩放/旋转元素')
+  }, [])
+
+  // 处理元素删除 - 保存历史
+  const handleElementDeleted = useCallback((_elementIds: string[]) => {
+    // 元素删除后保存历史
+    agentRef.current?.saveHistory('删除元素')
+  }, [])
+
+  // 处理文本编辑结束 - 保存历史
+  const handleTextEditEnd = useCallback((_elementId: string) => {
+    // 文本编辑结束后保存历史
+    agentRef.current?.saveHistory('编辑文本')
+  }, [])
+
   // 同步缩放状态
   useEffect(() => {
     const syncZoom = () => {
@@ -318,6 +342,10 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
             zoom={zoom}
+            canUndo={agentState.canUndo}
+            canRedo={agentState.canRedo}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
             vertical
           />
         </div>
@@ -342,6 +370,10 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
             snap
             dotMatrix={dotMatrix}
             onReady={handleEditorReady}
+            onElementCreated={handleElementCreated}
+            onElementUpdated={handleElementUpdated}
+            onElementDeleted={handleElementDeleted}
+            onTextEditEnd={handleTextEditEnd}
           />
         </div>
 

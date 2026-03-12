@@ -64,6 +64,14 @@ export interface LeaferEditorConfig {
   snapThreshold?: number
   /** 点阵配置 */
   dotMatrix?: DotMatrixConfig
+  /** 元素创建回调 */
+  onElementCreated?: (elementId: string) => void
+  /** 元素更新回调（拖动、缩放、旋转结束） */
+  onElementUpdated?: (elementIds: string[]) => void
+  /** 元素删除回调 */
+  onElementDeleted?: (elementIds: string[]) => void
+  /** 文本编辑结束回调 */
+  onTextEditEnd?: (elementId: string) => void
 }
 
 /**
@@ -95,6 +103,14 @@ export class LeaferEditor {
   private boundHandlePanMouseMove: (e: MouseEvent) => void
   private boundHandlePanMouseUp: (e: MouseEvent) => void
 
+  // 键盘事件处理
+  private boundHandleKeyDown: (e: KeyboardEvent) => void
+
+  // 编辑器事件处理
+  private boundHandleEditorMoveEnd: (e: any) => void
+  private boundHandleEditorScaleEnd: (e: any) => void
+  private boundHandleEditorRotateEnd: (e: any) => void
+
   constructor(config: LeaferEditorConfig) {
     this.config = {
       editable: true,
@@ -112,6 +128,14 @@ export class LeaferEditor {
     this.boundHandlePanMouseDown = this.handlePanMouseDown.bind(this)
     this.boundHandlePanMouseMove = this.handlePanMouseMove.bind(this)
     this.boundHandlePanMouseUp = this.handlePanMouseUp.bind(this)
+
+    // 绑定键盘事件处理函数
+    this.boundHandleKeyDown = this.handleKeyDown.bind(this)
+
+    // 绑定编辑器事件处理函数
+    this.boundHandleEditorMoveEnd = this.handleEditorMoveEnd.bind(this)
+    this.boundHandleEditorScaleEnd = this.handleEditorScaleEnd.bind(this)
+    this.boundHandleEditorRotateEnd = this.handleEditorRotateEnd.bind(this)
   }
 
   /**
@@ -149,6 +173,12 @@ export class LeaferEditor {
           this.setupDotMatrix()
         }
 
+        // 添加键盘事件监听
+        document.addEventListener('keydown', this.boundHandleKeyDown)
+
+        // 绑定编辑器事件监听
+        this.setupEditorEvents()
+
         // 等待 tree 层准备好
         if (app.tree) {
           app.tree.waitViewReady(() => resolve())
@@ -184,6 +214,96 @@ export class LeaferEditor {
       minSize: dotConfig.minSize ?? 0.1,
     })
     this.dotMatrix.enableDotMatrix(true)
+  }
+
+  /**
+   * 配置编辑器事件监听
+   */
+  private setupEditorEvents(): void {
+    if (!this.app?.editor) return
+
+    const editor = this.app.editor
+
+    // 监听拖动结束事件
+    editor.on('drag.end', this.boundHandleEditorMoveEnd)
+
+    // 监听缩放结束事件
+    editor.on('scale.end', this.boundHandleEditorScaleEnd)
+
+    // 监听旋转结束事件
+    editor.on('rotate.end', this.boundHandleEditorRotateEnd)
+  }
+
+  /**
+   * 移除编辑器事件监听
+   */
+  private removeEditorEvents(): void {
+    if (!this.app?.editor) return
+
+    const editor = this.app.editor
+
+    editor.off('drag.end', this.boundHandleEditorMoveEnd)
+    editor.off('scale.end', this.boundHandleEditorScaleEnd)
+    editor.off('rotate.end', this.boundHandleEditorRotateEnd)
+  }
+
+  /**
+   * 处理编辑器拖动结束
+   */
+  private handleEditorMoveEnd(e: any): void {
+    const target = e.target
+    if (!target) return
+
+    // 获取所有被移动的元素 ID
+    const elementIds = this.getElementIdsFromTarget(target)
+    if (elementIds.length > 0) {
+      this.config.onElementUpdated?.(elementIds)
+    }
+  }
+
+  /**
+   * 处理编辑器缩放结束
+   */
+  private handleEditorScaleEnd(e: any): void {
+    const target = e.target
+    if (!target) return
+
+    const elementIds = this.getElementIdsFromTarget(target)
+    if (elementIds.length > 0) {
+      this.config.onElementUpdated?.(elementIds)
+    }
+  }
+
+  /**
+   * 处理编辑器旋转结束
+   */
+  private handleEditorRotateEnd(e: any): void {
+    const target = e.target
+    if (!target) return
+
+    const elementIds = this.getElementIdsFromTarget(target)
+    if (elementIds.length > 0) {
+      this.config.onElementUpdated?.(elementIds)
+    }
+  }
+
+  /**
+   * 从事件目标获取元素 ID 列表
+   */
+  private getElementIdsFromTarget(target: any): string[] {
+    if (!target) return []
+
+    // 如果是数组（多选）
+    if (Array.isArray(target)) {
+      return target.map((el: UI) => el.id as string).filter(Boolean)
+    }
+
+    // 如果是单个元素
+    if (target.id) {
+      return [target.id as string]
+    }
+
+    return []
   }
 
   /**
@@ -271,6 +391,9 @@ export class LeaferEditor {
       leaferElement.id = id
       this.app.tree.add(leaferElement)
       this.elementsMap.set(id, leaferElement)
+
+      // 触发元素创建回调
+      this.config.onElementCreated?.(id)
     }
 
     return leaferElement
@@ -469,6 +592,10 @@ export class LeaferEditor {
 
     element.remove()
     this.elementsMap.delete(elementId)
+
+    // 触发元素删除回调
+    this.config.onElementDeleted?.([elementId])
+
     return true
   }
 
@@ -476,11 +603,23 @@ export class LeaferEditor {
    * 批量删除元素
    */
   deleteElements(elementIds: string[]): number {
-    let deleted = 0
+    const deletedIds: string[] = []
+
     elementIds.forEach((id) => {
-      if (this.deleteElement(id)) deleted++
+      const element = this.elementsMap.get(id)
+      if (element) {
+        element.remove()
+        this.elementsMap.delete(id)
+        deletedIds.push(id)
+      }
     })
-    return deleted
+
+    // 批量触发元素删除回调
+    if (deletedIds.length > 0) {
+      this.config.onElementDeleted?.(deletedIds)
+    }
+
+    return deletedIds.length
   }
 
   /**
@@ -866,12 +1005,42 @@ export class LeaferEditor {
   }
 
   /**
+   * 处理键盘事件
+   */
+  private handleKeyDown(e: KeyboardEvent): void {
+    // 如果正在输入文本，不处理快捷键
+    const activeElement = document.activeElement
+    if (
+      activeElement instanceof HTMLInputElement ||
+      activeElement instanceof HTMLTextAreaElement ||
+      activeElement?.getAttribute('contenteditable') === 'true'
+    ) {
+      return
+    }
+
+    // Delete 或 Backspace 键删除选中元素
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const selectedIds = this.getSelectedElementIds()
+      if (selectedIds.length > 0) {
+        e.preventDefault()
+        this.deleteElements(selectedIds)
+      }
+    }
+  }
+
+  /**
    * 销毁编辑器
    */
   destroy(): void {
+    // 移除键盘事件监听
+    document.removeEventListener('keydown', this.boundHandleKeyDown)
+
     // 移除平移事件监听
     this.removePanListeners()
     this.container.removeEventListener('mousedown', this.boundHandlePanMouseDown, true)
+
+    // 移除编辑器事件监听
+    this.removeEditorEvents()
 
     if (this.dotMatrix) {
       this.dotMatrix.destroy()

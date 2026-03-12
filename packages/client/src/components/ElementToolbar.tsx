@@ -16,6 +16,8 @@ import {
   Hand,
   ZoomIn,
   ZoomOut,
+  Undo2,
+  Redo2,
   type LucideIcon,
 } from 'lucide-react'
 import type { ResumeElement } from '@resume-editor/shared'
@@ -89,6 +91,14 @@ export interface ElementToolbarProps {
   onZoomOut?: () => void
   /** 当前缩放比例 */
   zoom?: number
+  /** 是否可以撤销 */
+  canUndo?: boolean
+  /** 是否可以重做 */
+  canRedo?: boolean
+  /** 撤销回调 */
+  onUndo?: () => void
+  /** 重做回调 */
+  onRedo?: () => void
   /** 自定义工具分组（覆盖默认） */
   toolGroups?: ToolGroupConfig[]
   /** 额外的自定义工具分组（追加到默认后面） */
@@ -345,6 +355,10 @@ export const ElementToolbar: React.FC<ElementToolbarProps> = ({
   onZoomIn,
   onZoomOut,
   zoom = 100,
+  canUndo = false,
+  canRedo = false,
+  onUndo,
+  onRedo,
   toolGroups,
   extraToolGroups,
   className,
@@ -451,6 +465,78 @@ export const ElementToolbar: React.FC<ElementToolbarProps> = ({
           )}
         </React.Fragment>
       ))}
+
+      {/* 撤销/重做 */}
+      {(onUndo || onRedo) && (
+        <>
+          <div style={separatorStyle} />
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: vertical ? 'column' : 'row',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <button
+              onClick={onUndo}
+              disabled={!canUndo}
+              title="撤销 (Ctrl+Z)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 36,
+                height: 36,
+                border: 'none',
+                borderRadius: 6,
+                backgroundColor: 'transparent',
+                color: canUndo ? '#666666' : '#cccccc',
+                cursor: canUndo ? 'pointer' : 'not-allowed',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (canUndo) {
+                  e.currentTarget.style.backgroundColor = '#f5f5f5'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <Undo2 size={18} strokeWidth={1.5} />
+            </button>
+            <button
+              onClick={onRedo}
+              disabled={!canRedo}
+              title="重做 (Ctrl+Y)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 36,
+                height: 36,
+                border: 'none',
+                borderRadius: 6,
+                backgroundColor: 'transparent',
+                color: canRedo ? '#666666' : '#cccccc',
+                cursor: canRedo ? 'pointer' : 'not-allowed',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (canRedo) {
+                  e.currentTarget.style.backgroundColor = '#f5f5f5'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <Redo2 size={18} strokeWidth={1.5} />
+            </button>
+          </div>
+        </>
+      )}
 
       {/* 缩放控制 */}
       {(onZoomIn || onZoomOut) && (

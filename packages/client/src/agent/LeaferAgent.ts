@@ -357,8 +357,35 @@ export class LeaferAgent {
    * 处理流式 Action
    */
   private handleStreamingAction(streaming: Streaming<AgentAction>): void {
+    const action = streaming.data
+
+    // 处理任务规划
+    if (action._type === 'task-plan') {
+      const steps = action.steps.map((step) => ({
+        id: step.id,
+        description: step.description,
+        status: 'pending' as const,
+      }))
+      this.chat.setLastMessageTaskSteps(steps)
+      const lastMessage = this.chat.getLastMessage()
+      if (lastMessage) {
+        this.callbacks.onMessage?.(lastMessage)
+      }
+      return
+    }
+
+    // 处理任务进度更新
+    if (action._type === 'task-progress') {
+      this.chat.updateTaskStepStatus(action.stepId, action.status)
+      const lastMessage = this.chat.getLastMessage()
+      if (lastMessage) {
+        this.callbacks.onMessage?.(lastMessage)
+      }
+      return
+    }
+
+    // 执行完成的 Action
     if (streaming.isComplete) {
-      // 执行完成的 Action
       this.actions.executeAction(streaming.data)
     }
   }

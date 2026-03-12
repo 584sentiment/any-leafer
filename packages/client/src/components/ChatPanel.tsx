@@ -3,7 +3,8 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react'
-import type { ChatMessage } from '@resume-editor/shared'
+import type { ChatMessage, TaskStep, TaskStepStatus } from '@resume-editor/shared'
+import { CheckCircle2, Circle, Loader2, XCircle } from 'lucide-react'
 
 export interface ChatPanelProps {
   /** 聊天历史 */
@@ -16,6 +17,88 @@ export interface ChatPanelProps {
   onCancel?: () => void
   /** 自定义类名 */
   className?: string
+}
+
+/**
+ * 获取步骤状态图标
+ */
+const getStatusIcon = (status: TaskStepStatus) => {
+  switch (status) {
+    case 'completed':
+      return <CheckCircle2 size={14} color="#52c41a" />
+    case 'in_progress':
+      return <Loader2 size={14} color="#1890ff" className="animate-spin" />
+    case 'failed':
+      return <XCircle size={14} color="#ff4d4f" />
+    default:
+      return <Circle size={14} color="#d9d9d9" />
+  }
+}
+
+/**
+ * 任务步骤列表组件
+ */
+const TaskStepsView: React.FC<{ steps: TaskStep[] }> = ({ steps }) => {
+  if (!steps || steps.length === 0) return null
+
+  const completedCount = steps.filter((s) => s.status === 'completed').length
+  const totalCount = steps.length
+
+  return (
+    <div
+      style={{
+        marginTop: 8,
+        padding: 8,
+        backgroundColor: '#fafafa',
+        borderRadius: 6,
+        border: '1px solid #e8e8e8',
+      }}
+    >
+      {/* 进度标题 */}
+      <div
+        style={{
+          fontSize: 12,
+          color: '#666',
+          marginBottom: 8,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}
+      >
+        <Loader2 size={12} className="animate-spin" />
+        <span>
+          任务进度: {completedCount}/{totalCount}
+        </span>
+      </div>
+
+      {/* 步骤列表 */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {steps.map((step, index) => (
+          <div
+            key={step.id || index}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '4px 0',
+              opacity: step.status === 'pending' ? 0.6 : 1,
+            }}
+          >
+            {getStatusIcon(step.status)}
+            <span
+              style={{
+                fontSize: 12,
+                color: step.status === 'completed' ? '#52c41a' : '#333',
+                textDecoration: step.status === 'completed' ? 'line-through' : 'none',
+              }}
+            >
+              {step.description}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({
@@ -97,7 +180,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             >
               <div
                 style={{
-                  maxWidth: '80%',
+                  maxWidth: '90%',
                   padding: '8px 12px',
                   borderRadius: 12,
                   backgroundColor:
@@ -108,6 +191,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 <div style={{ fontSize: 14, whiteSpace: 'pre-wrap' }}>
                   {message.content}
                 </div>
+
+                {/* 任务步骤展示 */}
+                {message.taskSteps && message.taskSteps.length > 0 && (
+                  <TaskStepsView steps={message.taskSteps} />
+                )}
+
                 <div
                   style={{
                     fontSize: 10,

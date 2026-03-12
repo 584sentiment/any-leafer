@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid'
-import type { ChatMessage, ChatRole } from '@resume-editor/shared'
+import type { ChatMessage, ChatRole, TaskStep } from '@resume-editor/shared'
 
 export interface ChatManagerConfig {
   /** 最大消息数量 */
@@ -123,6 +123,38 @@ export class AgentChatManager {
       lastMessage.content = content
       lastMessage.timestamp = Date.now() // 更新时间戳
       return lastMessage
+    }
+    return null
+  }
+
+  /**
+   * 设置最后一条消息的任务步骤
+   */
+  setLastMessageTaskSteps(steps: TaskStep[]): ChatMessage | null {
+    const lastMessage = this.messages[this.messages.length - 1]
+    if (lastMessage) {
+      lastMessage.taskSteps = steps
+      lastMessage.timestamp = Date.now()
+      return lastMessage
+    }
+    return null
+  }
+
+  /**
+   * 更新任务步骤状态
+   */
+  updateTaskStepStatus(
+    stepId: string,
+    status: TaskStep['status']
+  ): ChatMessage | null {
+    const lastMessage = this.messages[this.messages.length - 1]
+    if (lastMessage && lastMessage.taskSteps) {
+      const step = lastMessage.taskSteps.find((s) => s.id === stepId)
+      if (step) {
+        step.status = status
+        lastMessage.timestamp = Date.now()
+        return lastMessage
+      }
     }
     return null
   }

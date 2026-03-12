@@ -405,6 +405,39 @@ export const RedoActionSchema = withMeta(
   }
 )
 
+/** 任务规划 Action */
+export const TaskPlanActionSchema = withMeta(
+  z.object({
+    _type: z.literal('task-plan'),
+    intent: z.string().describe('操作意图说明'),
+    steps: z
+      .array(
+        z.object({
+          id: z.string().describe('步骤 ID'),
+          description: z.string().describe('步骤描述'),
+        })
+      )
+      .describe('任务步骤列表'),
+  }),
+  {
+    title: 'Task Plan',
+    description: '规划任务步骤',
+  }
+)
+
+/** 任务进度更新 Action */
+export const TaskProgressActionSchema = withMeta(
+  z.object({
+    _type: z.literal('task-progress'),
+    stepId: z.string().describe('步骤 ID'),
+    status: z.enum(['pending', 'in_progress', 'completed', 'failed']).describe('步骤状态'),
+  }),
+  {
+    title: 'Task Progress',
+    description: '更新任务步骤进度',
+  }
+)
+
 // ============ Action 联合 Schema ============
 
 /** 所有 Action 类型的联合 */
@@ -425,6 +458,8 @@ export const AgentActionSchema = z.discriminatedUnion('_type', [
   ClearCanvasActionSchema,
   UndoActionSchema,
   RedoActionSchema,
+  TaskPlanActionSchema,
+  TaskProgressActionSchema,
 ])
 
 /** Action 类型 */

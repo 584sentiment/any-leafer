@@ -267,6 +267,25 @@ export type AIModelType =
 export type ChatRole = 'user' | 'assistant' | 'system'
 
 /**
+ * 任务步骤状态
+ */
+export type TaskStepStatus = 'pending' | 'in_progress' | 'completed' | 'failed'
+
+/**
+ * 任务步骤
+ */
+export interface TaskStep {
+  /** 步骤 ID */
+  id: string
+  /** 步骤描述 */
+  description: string
+  /** 步骤状态 */
+  status: TaskStepStatus
+  /** 关联的 Action ID */
+  actionId?: string
+}
+
+/**
  * 聊天消息
  */
 export interface ChatMessage {
@@ -280,6 +299,8 @@ export interface ChatMessage {
   timestamp: number
   /** 关联的 Action */
   actions?: string[]
+  /** 任务步骤列表 */
+  taskSteps?: TaskStep[]
 }
 
 /**

@@ -4,20 +4,24 @@
  */
 
 import type { LeaferEditor } from '../../canvas/LeaferEditor'
-import type { ResumeTemplate, ResumeElement } from '@resume-editor/shared'
+import type { ResumeTemplate, ResumeElement, ResumeData } from '@resume-editor/shared'
 import { v4 as uuidv4 } from 'uuid'
 
 export interface TemplateManagerConfig {
   editor: LeaferEditor
   templates?: ResumeTemplate[]
+  /** API 端点，用于智能生成 */
+  apiEndpoint?: string
 }
 
 export class TemplateManager {
   private editor: LeaferEditor
   private templates: Map<string, ResumeTemplate> = new Map()
+  private apiEndpoint?: string
 
   constructor(config: TemplateManagerConfig) {
     this.editor = config.editor
+    this.apiEndpoint = config.apiEndpoint
 
     // 注册初始模板
     config.templates?.forEach((template) => {
@@ -54,7 +58,7 @@ export class TemplateManager {
   }
 
   /**
-   * 应用模板到画布
+   * 应用模板到画布（快速应用模式）
    */
   applyTemplate(templateId: string): boolean {
     const template = this.templates.get(templateId)
@@ -64,11 +68,73 @@ export class TemplateManager {
     this.editor.clearCanvas()
 
     // 创建模板中的所有元素
-    template.elements.forEach((element) => {
+    const elements = template.elements || []
+    elements.forEach((element) => {
       this.editor.createElement(element, { id: element.id })
     })
 
     return true
+  }
+
+  /**
+   * 应用元素列表到画布
+   */
+  applyElements(elements: ResumeElement[]): void {
+    // 清空当前画布
+    this.editor.clearCanvas()
+
+    // 创建所有元素
+    elements.forEach((element) => {
+      this.editor.createElement(element, { id: element.id })
+    })
+  }
+
+  /**
+   * 智能生成简历（调用后端 API）
+   */
+  async generateSmartTemplate(
+    templateId: string,
+    resumeData: ResumeData
+  ): Promise<ResumeElement[]> {
+    const template = this.templates.get(templateId)
+    if (!template) {
+      throw new Error('模板不存在')
+    }
+
+    if (!this.apiEndpoint) {
+      throw new Error('未配置 API 端点')
+    }
+
+    try {
+      const response = await fetch(`${this.apiEndpoint}/api/template/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          templateId,
+          templateConfig: {
+            category: template.category,
+            smartConfig: template.smartConfig,
+            canvasSize: template.canvasSize,
+          },
+          resumeData,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: '生成失败' }))
+        throw new Error(error.message || '生成失败')
+      }
+
+      const result = await response.json()
+      return result.elements as ResumeElement[]
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error
+      }
+      throw new Error('网络请求失败')
+    }
   }
 
   /**
@@ -144,7 +210,10 @@ export class TemplateManager {
       const template = JSON.parse(json) as ResumeTemplate
 
       // 验证必要字段
-      if (!template.id || !template.name || !template.category || !Array.isArray(template.elements)) {
+      const hasElements = Array.isArray(template.elements) && template.elements.length > 0
+      const hasSmartConfig = template.smartConfig !== undefined
+
+      if (!template.id || !template.name || !template.category || (!hasElements && !hasSmartConfig)) {
         return null
       }
 

@@ -541,3 +541,21 @@ export function getActionMeta(actionType: ActionTypeName): SchemaMeta | undefine
   const schema = ActionSchemaRegistry[actionType]
   return schema?._meta
 }
+
+// 导出简历数据 Schema
+export {
+  ResumeDataSchema,
+  BasicInfoSchema,
+  ExperienceItemSchema,
+  EducationItemSchema,
+  SkillItemSchema,
+  SkillLevelSchema,
+  CustomSectionSchema,
+  type ResumeData,
+  type BasicInfo,
+  type ExperienceItem,
+  type EducationItem,
+  type SkillItem,
+  type SkillLevel,
+  type CustomSection,
+} from './resume-data'

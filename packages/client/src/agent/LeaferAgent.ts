@@ -12,6 +12,7 @@ import type {
   ChatMessage,
   ResumeElement,
   ResumeTemplate,
+  ResumeData,
   Streaming,
   ExportOptions,
 } from '@resume-editor/shared'
@@ -128,6 +129,7 @@ export class LeaferAgent {
     this.templates = new TemplateManager({
       editor: config.editor,
       templates: config.templates,
+      apiEndpoint: config.apiEndpoint,
     })
 
     this.export = new ExportManager({
@@ -296,6 +298,24 @@ export class LeaferAgent {
       this.saveHistory(`应用模板: ${templateId}`)
     }
     return success
+  }
+
+  /**
+   * 智能生成模板
+   */
+  async generateSmartTemplate(
+    templateId: string,
+    resumeData: ResumeData
+  ): Promise<boolean> {
+    try {
+      const elements = await this.templates.generateSmartTemplate(templateId, resumeData)
+      this.templates.applyElements(elements)
+      this.saveHistory(`智能生成模板: ${templateId}`)
+      return true
+    } catch (error) {
+      this.handleError(error instanceof Error ? error : new Error(String(error)))
+      return false
+    }
   }
 
   /**

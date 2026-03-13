@@ -236,6 +236,16 @@ export const modernTemplate: ResumeTemplate = {
 }
 
 /**
+ * 模板分类信息
+ */
+export const templateCategories = [
+  { id: 'classic', name: '经典', description: '简洁专业的经典风格' },
+  { id: 'modern', name: '现代', description: '现代简约的设计风格' },
+  { id: 'minimal', name: '简约', description: '极简主义风格' },
+  { id: 'creative', name: '创意', description: '富有创意的设计' },
+] as const
+
+/**
  * 所有模板
  */
 export const allTemplates: ResumeTemplate[] = [classicTemplate, modernTemplate]

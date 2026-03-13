@@ -11,6 +11,8 @@ import {
   type LangChainAgentRequest,
 } from '../agent/LangChainAgentService'
 
+import { templateRouter } from './template'
+
 // 创建 Hono 应用
 const app = new Hono()
 
@@ -129,5 +131,8 @@ app.get('/templates', (c) => {
     templates: [],
   })
 })
+
+// 模板相关 API
+app.route('/api/template', templateRouter)
 
 export default app

@@ -12,9 +12,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # 安装依赖
 pnpm install
 
-# 开发模式（需要两个终端）
-cd packages/worker && pnpm dev    # 启动 Worker 后端 (localhost:8787)
-cd apps/demo && pnpm dev          # 启动前端演示应用 (localhost:3000)
+# 开发模式
+pnpm dev                    # 一键启动（worker + demo）
+pnpm dev:worker             # 仅启动 Worker 后端 (localhost:8787)
+pnpm dev:demo               # 仅启动前端演示应用 (localhost:3001)
 
 # 构建所有包
 pnpm build
@@ -24,6 +25,9 @@ pnpm typecheck
 
 # 代码检查
 pnpm lint
+
+# 测试
+pnpm test
 
 # 清理构建产物
 pnpm clean
@@ -43,6 +47,13 @@ packages/
 │
 ├── worker/      # @resume-editor/worker - Cloudflare Worker 后端
 │   ├── src/routes/    # Hono API 路由
+│   ├── src/agent/     # AI 服务实现
+│   │   ├── LangChainAgentService.ts  # LangChain 服务
+│   │   ├── AgentExecutor.ts          # Agent 执行器
+│   │   ├── ActionValidator.ts        # Action 验证器
+│   │   ├── prompts/                  # Agent 提示词
+│   │   ├── tools/                    # AI 工具
+│   │   └── schemas/                  # Agent 状态 Schema
 │   ├── src/prompt/    # AI 系统提示词
 │   └── src/do/        # Durable Objects（可选）
 │
@@ -91,6 +102,7 @@ AI 代理核心类，协调以下管理器：
 
 Cloudflare Worker 后端，使用 Hono 框架：
 - 接收聊天请求，调用 AI 模型
+- 使用 LangChain + LangGraph 实现 Agent 执行验证架构
 - 使用 Vercel AI SDK 流式返回 Actions
 - 支持多种 AI 模型（Claude、GPT-4o、Gemini）
 

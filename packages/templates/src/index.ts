@@ -1,6 +1,7 @@
 /**
  * @resume-editor/templates
- * 预置简历模板
+ * 鄷简历模板
  */
 
-export { classicTemplate, modernTemplate, allTemplates } from './classic'
+// 导出新模板
+export { allTemplates, templateCategories } from './classic'

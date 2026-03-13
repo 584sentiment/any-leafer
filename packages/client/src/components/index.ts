@@ -22,3 +22,9 @@ export type {
   ToolGroupConfig,
   ToolType,
 } from './ElementToolbar'
+
+export { TemplateSelector } from './TemplateSelector'
+export type { TemplateSelectorProps } from './TemplateSelector'
+
+export { ResumeForm } from './ResumeForm'
+export type { ResumeFormProps } from './ResumeForm'

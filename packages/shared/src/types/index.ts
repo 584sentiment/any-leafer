@@ -223,6 +223,67 @@ export interface CanvasState {
 export type TemplateCategory = 'classic' | 'modern' | 'minimal' | 'creative'
 
 /**
+ * 模板应用模式
+ */
+export type TemplateApplyMode = 'quick' | 'smart'
+
+/**
+ * 布局提示
+ */
+export interface LayoutHint {
+  /** 区域类型 */
+  section: 'header' | 'experience' | 'education' | 'skills' | 'custom'
+  /** 位置 */
+  position: 'top' | 'left' | 'right' | 'bottom'
+  /** 样式描述 */
+  style?: string
+}
+
+/**
+ * 配色方案
+ */
+export interface ColorScheme {
+  /** 主色 */
+  primary: string
+  /** 辅助色 */
+  secondary: string
+  /** 背景色 */
+  background: string
+  /** 文本色 */
+  text: string
+  /** 强调色 */
+  accent?: string
+}
+
+/**
+ * 字体配置
+ */
+export interface TypographyConfig {
+  /** 标题字体 */
+  headingFont?: string
+  /** 正文字体 */
+  bodyFont?: string
+  /** 标题字号范围 */
+  headingSizes?: { min: number; max: number }
+  /** 正文字号范围 */
+  bodySizes?: { min: number; max: number }
+}
+
+/**
+ * 智能模板配置
+ */
+export interface SmartTemplateConfig {
+  /** 风格描述 */
+  stylePrompt: string
+  /** 布局提示 */
+  layoutHints: LayoutHint[]
+  /** 配色方案 */
+  colorScheme?: ColorScheme
+  /** 字体配置 */
+  typography?: TypographyConfig
+}
+
+/**
  * 简历模板
  */
 export interface ResumeTemplate {
@@ -237,13 +298,15 @@ export interface ResumeTemplate {
   /** 缩略图 URL */
   thumbnail?: string
   /** 元素列表 */
-  elements: ResumeElement[]
+  elements?: ResumeElement[]
   /** 画布尺寸 */
   canvasSize: { width: number; height: number }
   /** 创建时间 */
   createdAt: number
   /** 更新时间 */
   updatedAt: number
+  /** 智能模板配置 */
+  smartConfig?: SmartTemplateConfig
 }
 
 // ============ AI 相关类型 ============

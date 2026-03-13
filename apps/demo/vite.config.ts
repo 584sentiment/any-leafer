@@ -6,6 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    watch: {
+      // 只排除 node_modules 和 dist 目录，让 Vite 监听 packages 源文件的变化
+      ignored: ['**/node_modules/**', '**/dist/**'],
+    },
   },
   resolve: {
     alias: {

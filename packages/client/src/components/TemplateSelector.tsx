@@ -207,7 +207,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   style={{
                     width: '100%',
                     height: 180,
-                    backgroundImage: `url(${getThumbnail(template)})`,
+                    backgroundImage: `url("${getThumbnail(template)}")`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     position: 'relative',

@@ -5,6 +5,13 @@
 import type { ResumeTemplate, ResumeElement } from '@resume-editor/shared'
 
 /**
+ * 生成 SVG 缩略图的辅助函数
+ */
+const createSvgThumbnail = (svgContent: string): string => {
+  return `data:image/svg+xml,${encodeURIComponent(svgContent)}`
+}
+
+/**
  * 创意简历模板 - 彩色侧边栏
  */
 export const creativeColorfulTemplate: ResumeTemplate = {
@@ -13,6 +20,55 @@ export const creativeColorfulTemplate: ResumeTemplate = {
   description: '大胆配色，适合创意行业求职',
   category: 'creative',
   canvasSize: { width: 800, height: 1000 },
+  thumbnail: createSvgThumbnail(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="260" viewBox="0 0 200 260">
+      <defs>
+        <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1"/>
+        </filter>
+      </defs>
+      <!-- 背景 -->
+      <rect fill="#ffffff" width="200" height="260" rx="8" filter="url(#shadow)"/>
+
+      <!-- 顶部紫色区域 -->
+      <rect fill="#6c5ce7" x="0" y="0" width="200" height="50" rx="8 8 0 0"/>
+
+      <!-- 姓名和职位 -->
+      <rect fill="#ffffff" x="15" y="12" width="80" height="12" rx="2" opacity="0.9"/>
+      <rect fill="#dfe6e9" x="15" y="30" width="100" height="6" rx="1" opacity="0.7"/>
+
+      <!-- 联系信息 -->
+      <rect fill="#a29bfe" x="15" y="58" width="170" height="5" rx="1" opacity="0.6"/>
+
+      <!-- 关于我区块 -->
+      <rect fill="#6c5ce7" x="15" y="78" width="40" height="6" rx="1"/>
+      <rect fill="#666" x="15" y="90" width="170" height="4" rx="1"/>
+      <rect fill="#999" x="15" y="98" width="160" height="3" rx="1"/>
+      <rect fill="#999" x="15" y="105" width="155" height="3" rx="1"/>
+
+      <!-- 工作经历区块 -->
+      <rect fill="#6c5ce7" x="15" y="122" width="50" height="6" rx="1"/>
+      <rect fill="#666" x="15" y="134" width="170" height="4" rx="1"/>
+      <rect fill="#999" x="15" y="142" width="150" height="3" rx="1"/>
+      <rect fill="#999" x="15" y="149" width="160" height="3" rx="1"/>
+      <rect fill="#999" x="15" y="156" width="145" height="3" rx="1"/>
+
+      <!-- 技能区块 -->
+      <rect fill="#6c5ce7" x="15" y="173" width="50" height="6" rx="1"/>
+      <rect fill="#666" x="15" y="185" width="170" height="4" rx="1"/>
+      <rect fill="#999" x="15" y="193" width="140" height="3" rx="1"/>
+      <rect fill="#999" x="15" y="200" width="160" height="3" rx="1"/>
+
+      <!-- 技能标签 -->
+      <rect fill="#6c5ce7" x="15" y="215" width="45" height="10" rx="3" opacity="0.2"/>
+      <rect fill="#6c5ce7" x="65" y="215" width="50" height="10" rx="3" opacity="0.2"/>
+      <rect fill="#6c5ce7" x="120" y="215" width="40" height="10" rx="3" opacity="0.2"/>
+
+      <!-- 分类标签 -->
+      <rect fill="#e74c3c" x="15" y="235" width="35" height="14" rx="3" opacity="0.15"/>
+      <text x="32" y="246" font-size="8" fill="#e74c3c" text-anchor="middle" font-family="Arial">创意</text>
+    </svg>
+  `),
   createdAt: Date.now(),
   updatedAt: Date.now(),
   elements: [
@@ -210,6 +266,66 @@ export const creativeGradientTemplate: ResumeTemplate = {
   description: '现代渐变配色，科技感十足',
   category: 'creative',
   canvasSize: { width: 800, height: 1000 },
+  thumbnail: createSvgThumbnail(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="260" viewBox="0 0 200 260">
+      <defs>
+        <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1"/>
+        </filter>
+        <linearGradient id="blueGreen" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#0984e3"/>
+          <stop offset="100%" style="stop-color:#00b894"/>
+        </linearGradient>
+      </defs>
+      <!-- 背景 -->
+      <rect fill="#ffffff" width="200" height="260" rx="8" filter="url(#shadow)"/>
+
+      <!-- 左侧渐变侧边栏 -->
+      <rect fill="url(#blueGreen)" x="0" y="0" width="70" height="260" rx="8 0 0 8"/>
+
+      <!-- 头像占位 -->
+      <circle fill="#74b9ff" cx="35" cy="35" r="22"/>
+      <circle fill="#ffffff" cx="35" cy="30" r="8" opacity="0.8"/>
+      <ellipse fill="#ffffff" cx="35" cy="48" rx="12" ry="8" opacity="0.6"/>
+
+      <!-- 姓名和职位 -->
+      <rect fill="#ffffff" x="15" y="65" width="40" height="10" rx="2" opacity="0.9"/>
+      <rect fill="#dfe6e9" x="12" y="80" width="46" height="5" rx="1" opacity="0.7"/>
+
+      <!-- 侧边栏联系信息 -->
+      <rect fill="#ffffff" x="10" y="100" width="45" height="4" rx="1" opacity="0.5"/>
+      <rect fill="#ffffff" x="10" y="108" width="40" height="3" rx="1" opacity="0.3"/>
+      <rect fill="#ffffff" x="10" y="115" width="42" height="3" rx="1" opacity="0.3"/>
+      <rect fill="#ffffff" x="10" y="122" width="38" height="3" rx="1" opacity="0.3"/>
+
+      <!-- 侧边栏技能 -->
+      <rect fill="#ffffff" x="10" y="140" width="40" height="4" rx="1" opacity="0.5"/>
+      <rect fill="#ffffff" x="10" y="150" width="45" height="3" rx="1" opacity="0.3"/>
+      <rect fill="#ffffff" x="10" y="157" width="42" height="3" rx="1" opacity="0.3"/>
+      <rect fill="#ffffff" x="10" y="164" width="38" height="3" rx="1" opacity="0.3"/>
+
+      <!-- 右侧主内容区 -->
+      <rect fill="#0984e3" x="80" y="20" width="50" height="6" rx="1"/>
+      <rect fill="#666" x="80" y="32" width="105" height="4" rx="1"/>
+      <rect fill="#999" x="80" y="40" width="95" height="3" rx="1"/>
+      <rect fill="#999" x="80" y="47" width="100" height="3" rx="1"/>
+
+      <rect fill="#0984e3" x="80" y="65" width="50" height="6" rx="1"/>
+      <rect fill="#666" x="80" y="77" width="105" height="4" rx="1"/>
+      <rect fill="#999" x="80" y="85" width="90" height="3" rx="1"/>
+      <rect fill="#999" x="80" y="92" width="100" height="3" rx="1"/>
+      <rect fill="#999" x="80" y="99" width="85" height="3" rx="1"/>
+
+      <rect fill="#00b894" x="80" y="120" width="50" height="6" rx="1"/>
+      <rect fill="#666" x="80" y="132" width="105" height="4" rx="1"/>
+      <rect fill="#999" x="80" y="140" width="95" height="3" rx="1"/>
+      <rect fill="#999" x="80" y="147" width="100" height="3" rx="1"/>
+
+      <!-- 分类标签 -->
+      <rect fill="#e74c3c" x="80" y="235" width="35" height="14" rx="3" opacity="0.15"/>
+      <text x="97" y="246" font-size="8" fill="#e74c3c" text-anchor="middle" font-family="Arial">创意</text>
+    </svg>
+  `),
   createdAt: Date.now(),
   updatedAt: Date.now(),
   elements: [

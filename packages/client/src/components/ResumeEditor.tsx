@@ -7,11 +7,8 @@ import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { LeaferCanvas, LeaferCanvasRef, DotMatrixConfig } from '../canvas/LeaferCanvas'
 import { LeaferAgent, LeaferAgentState } from '../agent/LeaferAgent'
 import { ChatPanel } from './ChatPanel'
-import { Toolbar } from './Toolbar'
 import { ElementToolbar, ToolConfig } from './ElementToolbar'
 import type {
-  AgentMode,
-  AIModelType,
   ChatMessage,
   ResumeTemplate,
   ResumeElement,
@@ -21,26 +18,26 @@ import type {
  * ResumeEditor 配置
  */
 export interface ResumeEditorProps {
-  /** 画布宽度 */
-  canvasWidth?: number
-  /** 画布高度 */
-  canvasHeight?: number
+  /** 画布宽度（数字或 '100%'） */
+  canvasWidth?: number | string
+  /** 画布高度（数字或 '100%'） */
+  canvasHeight?: number | string
   /** API 端点 */
   apiEndpoint: string
   /** 默认模型 */
-  defaultModel?: AIModelType
+  defaultModel?: string
   /** 预加载的模板 */
   templates?: ResumeTemplate[]
   /** 聊天面板宽度 */
   chatWidth?: number
   /** 初始模式 */
-  initialMode?: AgentMode
+  initialMode?: string
   /** 点阵配置 */
   dotMatrix?: DotMatrixConfig
-  /** 保存回调 */
-  onSave?: (elements: any[]) => void
-  /** 导出回调 */
-  onExport?: (blob: Blob, format: string) => void
+  /** 初始应用的模板 ID（快速应用模式） */
+  initialTemplateId?: string
+  /** 初始渲染的元素列表（智能生成模式） */
+  initialElements?: ResumeElement[]
   /** 自定义类名 */
   className?: string
   /** 自定义样式 */
@@ -48,16 +45,16 @@ export interface ResumeEditorProps {
 }
 
 export const ResumeEditor: React.FC<ResumeEditorProps> = ({
-  canvasWidth = 800,
-  canvasHeight = 600,
+  canvasWidth = '100%',
+  canvasHeight = '100%',
   apiEndpoint,
   defaultModel = 'deepseek-chat',
   templates = [],
   chatWidth = 320,
   initialMode = 'edit',
   dotMatrix = { enabled: true },
-  onSave,
-  onExport,
+  initialTemplateId,
+  initialElements,
   className,
   style,
 }) => {
@@ -75,6 +72,7 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [activeTool, setActiveTool] = useState('select')
   const [zoom, setZoom] = useState(100)
+  const [isEditorReady, setIsEditorReady] = useState(false)
 
   // 处理元素工具选择
   const handleToolSelect = useCallback((tool: ToolConfig) => {
@@ -217,12 +215,43 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
         })
 
         agentRef.current = agent
+
+        // 标记编辑器已准备就绪
+        setIsEditorReady(true)
       } catch {
         // 创建 Agent 失败，忽略错误
       }
     },
     [apiEndpoint, defaultModel, templates]
   )
+
+  // 处理初始模板或初始元素（在编辑器准备好之后）
+  useEffect(() => {
+    // 等待编辑器初始化完成
+    if (!isEditorReady || !canvasRef.current) return
+
+    // 优先使用初始元素（智能生成模式）
+    if (initialElements && initialElements.length > 0) {
+      initialElements.forEach((element) => {
+        canvasRef.current?.createElement(element)
+      })
+      // 保存历史记录
+      agentRef.current?.saveHistory('应用智能生成模板')
+      return
+    }
+
+    // 使用初始模板（快速应用模式）
+    if (initialTemplateId && templates.length > 0) {
+      const template = templates.find((t) => t.id === initialTemplateId)
+      if (template?.elements && template.elements.length > 0) {
+        template.elements.forEach((element) => {
+          canvasRef.current?.createElement(element)
+        })
+        // 保存历史记录
+        agentRef.current?.saveHistory(`应用模板: ${template.name}`)
+      }
+    }
+  }, [isEditorReady, initialTemplateId, initialElements, templates])
 
   // 处理发送消息
   const handleSendMessage = useCallback((content: string) => {
@@ -239,16 +268,6 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
     agentRef.current?.cancelRequest()
   }, [])
 
-  // 处理模式变化
-  const handleModeChange = useCallback((mode: AgentMode) => {
-    agentRef.current?.setMode(mode)
-  }, [])
-
-  // 处理模型变化
-  const handleModelChange = useCallback((model: AIModelType) => {
-    agentRef.current?.setModel(model)
-  }, [])
-
   // 处理撤销
   const handleUndo = useCallback(() => {
     agentRef.current?.undo()
@@ -257,35 +276,6 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
   // 处理重做
   const handleRedo = useCallback(() => {
     agentRef.current?.redo()
-  }, [])
-
-  // 处理导出
-  const handleExport = useCallback(
-    async (format: 'png' | 'jpg' | 'pdf') => {
-      const blob = await agentRef.current?.exportCanvas({
-        format,
-        quality: 0.95,
-      })
-      if (blob && onExport) {
-        onExport(blob, format)
-      } else if (blob) {
-        // 默认下载
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `resume.${format === 'pdf' ? 'pdf' : format}`
-        a.click()
-        URL.revokeObjectURL(url)
-      }
-    },
-    [onExport]
-  )
-
-  // 处理清空
-  const handleClear = useCallback(() => {
-    if (window.confirm('确定要清空画布吗？')) {
-      agentRef.current?.clearCanvas()
-    }
   }, [])
 
   return (
@@ -299,21 +289,6 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
         ...style,
       }}
     >
-      {/* 工具栏 */}
-      <Toolbar
-        mode={agentState.mode}
-        model={agentState.model}
-        canUndo={agentState.canUndo}
-        canRedo={agentState.canRedo}
-        isProcessing={agentState.isProcessing}
-        onModeChange={handleModeChange}
-        onModelChange={handleModelChange}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onExport={handleExport}
-        onClear={handleClear}
-      />
-
       {/* 主内容区 */}
       <div
         style={{
@@ -355,10 +330,8 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
           style={{
             flex: 1,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 24,
-            overflow: 'auto',
+            overflow: 'hidden',
+            padding: 0,
           }}
         >
           <LeaferCanvas

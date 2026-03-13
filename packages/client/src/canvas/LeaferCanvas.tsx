@@ -18,10 +18,10 @@ export type { DotMatrixConfig }
  * LeaferCanvas 组件属性
  */
 export interface LeaferCanvasProps {
-  /** 画布宽度 */
-  width?: number
-  /** 画布高度 */
-  height?: number
+  /** 画布宽度（数字或 '100%'） */
+  width?: number | string
+  /** 画布高度（数字或 '100%'） */
+  height?: number | string
   /** 背景色 */
   backgroundColor?: string
   /** 是否启用编辑器 */
@@ -96,8 +96,8 @@ export interface LeaferCanvasRef {
 export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
   (props, ref) => {
     const {
-      width = 800,
-      height = 600,
+      width = '100%',
+      height = '100%',
       backgroundColor = '#ffffff',
       editable = true,
       snap = true,
@@ -149,10 +149,15 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
         return
       }
 
+      // 计算初始尺寸
+      const container = containerRef.current
+      const initialWidth = typeof width === 'number' ? width : container.clientWidth
+      const initialHeight = typeof height === 'number' ? height : container.clientHeight
+
       const config: LeaferEditorConfig = {
         container: containerRef.current,
-        width,
-        height,
+        width: initialWidth,
+        height: initialHeight,
         backgroundColor,
         editable,
         snap,
@@ -205,10 +210,17 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
         return editorRef.current?.deleteElement(id) ?? false
       },
       getCanvasState: () => {
+        const container = containerRef.current
         return (
           editorRef.current?.getCanvasState() ?? {
             elements: [],
-            viewport: { x: 0, y: 0, zoom: 1, width, height },
+            viewport: {
+              x: 0,
+              y: 0,
+              zoom: 1,
+              width: container?.clientWidth ?? 800,
+              height: container?.clientHeight ?? 600,
+            },
             selection: [],
           }
         )
@@ -248,13 +260,34 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
       },
     }))
 
-    // 处理尺寸变化
+    // 处理尺寸变化（响应式）
     useEffect(() => {
+      const container = containerRef.current
       const editor = editorRef.current
-      if (!editor) return
+      if (!container || !editor) return
 
       const leafer = editor.getLeafer()
-      if (leafer) {
+      if (!leafer) return
+
+      // 如果是响应式尺寸，使用 ResizeObserver 监听
+      if (typeof width === 'string' || typeof height === 'string') {
+        const resizeObserver = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            const { width: containerWidth, height: containerHeight } = entry.contentRect
+            if (leafer) {
+              leafer.width = containerWidth
+              leafer.height = containerHeight
+            }
+          }
+        })
+
+        resizeObserver.observe(container)
+
+        return () => {
+          resizeObserver.disconnect()
+        }
+      } else {
+        // 固定尺寸
         leafer.width = width
         leafer.height = height
       }

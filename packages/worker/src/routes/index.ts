@@ -6,6 +6,11 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { handleChatRequest, type AgentServiceRequest, type Env } from '../do/AgentService'
 
+import {
+  handleLangChainChatRequest,
+  type LangChainAgentRequest,
+} from '../agent/LangChainAgentService'
+
 // 创建 Hono 应用
 const app = new Hono()
 
@@ -39,7 +44,7 @@ function getEnv(c: any): Env | undefined {
   }
 }
 
-// 聊天接口
+// 聊天接口（传统模式）
 app.post('/chat', async (c) => {
   try {
     const body = await c.req.json<AgentServiceRequest>()
@@ -60,6 +65,41 @@ app.post('/chat', async (c) => {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
+      },
+    })
+  } catch (error) {
+    return c.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      500
+    )
+  }
+})
+
+// LangChain 模式聊天接口（带执行验证）
+app.post('/chat/langchain', async (c) => {
+  try {
+    const body = await c.req.json<LangChainAgentRequest & { model?: string }>()
+
+    if (!body.message) {
+      return c.json({ error: 'Invalid message' }, 400)
+    }
+
+    const stream = await handleLangChainChatRequest(
+      {
+        message: body.message,
+        canvasContext: body.canvasContext,
+        mode: body.mode || 'edit',
+        history: body.history,
+      },
+      body.model || 'deepseek-chat',
+      getEnv(c)
+    )
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     })
   } catch (error) {

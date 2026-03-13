@@ -30,6 +30,15 @@ import {
 } from './managers'
 
 /**
+ * 任务步骤状态
+ */
+interface TaskStepState {
+  id: string
+  description: string
+  status: 'pending' | 'in_progress' | 'completed' | 'failed'
+}
+
+/**
  * LeaferAgent 配置
  */
 export interface LeaferAgentConfig {
@@ -90,6 +99,9 @@ export class LeaferAgent {
   private mode: AgentMode = 'edit'
   private model: AIModelType
   private callbacks: LeaferAgentCallbacks = {}
+
+  // 任务步骤验证
+  private pendingTaskSteps: Map<string, TaskStepState> = new Map()
 
   constructor(config: LeaferAgentConfig) {
     this.editor = config.editor
@@ -327,6 +339,7 @@ export class LeaferAgent {
     this.history.clear()
     this.editor.clearCanvas()
     this.mode = 'edit'
+    this.pendingTaskSteps.clear()
     this.notifyStateChange()
   }
 
@@ -367,6 +380,8 @@ export class LeaferAgent {
         status: 'pending' as const,
       }))
       this.chat.setLastMessageTaskSteps(steps)
+      // 初始化待验证步骤
+      this.pendingTaskSteps = new Map(steps.map(s => [s.id, { ...s, status: 'pending' as const }]))
       const lastMessage = this.chat.getLastMessage()
       if (lastMessage) {
         this.callbacks.onMessage?.(lastMessage)
@@ -377,6 +392,15 @@ export class LeaferAgent {
     // 处理任务进度更新
     if (action._type === 'task-progress') {
       this.chat.updateTaskStepStatus(action.stepId, action.status)
+      // 更新待验证步骤状态
+      if (this.pendingTaskSteps.has(action.stepId)) {
+        this.pendingTaskSteps.set(action.stepId, {
+          ...this.pendingTaskSteps.get(action.stepId)!,
+          status: action.status,
+        })
+        // 检查是否所有步骤都完成
+        this.checkAllStepsCompleted()
+      }
       const lastMessage = this.chat.getLastMessage()
       if (lastMessage) {
         this.callbacks.onMessage?.(lastMessage)
@@ -387,6 +411,36 @@ export class LeaferAgent {
     // 执行完成的 Action
     if (streaming.isComplete) {
       this.actions.executeAction(streaming.data)
+    }
+  }
+
+  /**
+   * 检查是否所有步骤都完成
+   */
+  private checkAllStepsCompleted(): { completed: boolean; warnings: string[] } {
+    if (!this.pendingTaskSteps || this.pendingTaskSteps.size === 0) {
+      return { completed: true, warnings: [] }
+    }
+
+    const warnings: string[] = []
+
+    // 检查是否有失败的步骤
+    const failedSteps = Array.from(this.pendingTaskSteps.values()).filter((s) => s.status === 'failed')
+    if (failedSteps.length > 0) {
+      warnings.push(`有 ${failedSteps.length} 个步骤执行失败`)
+    }
+
+    // 检查是否有未完成的步骤
+    const incompleteSteps = Array.from(this.pendingTaskSteps.values()).filter(
+      (s) => s.status === 'pending' || s.status === 'in_progress'
+    )
+    if (incompleteSteps.length > 0) {
+      warnings.push(`有 ${incompleteSteps.length} 个步骤未完成`)
+    }
+
+    return {
+      completed: warnings.length === 0,
+      warnings,
     }
   }
 
@@ -412,6 +466,9 @@ export class LeaferAgent {
     if (actions.some((a) => this.isCanvasModifyingAction(a))) {
       this.saveHistory('AI 编辑')
     }
+
+    // 清空待验证步骤
+    this.pendingTaskSteps.clear()
   }
 
   /**

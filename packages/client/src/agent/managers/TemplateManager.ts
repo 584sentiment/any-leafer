@@ -58,6 +58,41 @@ export class TemplateManager {
   }
 
   /**
+   * 将模板元素坐标（相对于模板 canvasSize 的 0,0 原点）映射到纸张的画布绝对坐标。
+   *
+   * 模板坐标系：以模板 canvasSize（如 794×1123）为参考，从 (0,0) 开始，
+   * 对应纸张左上角（不含 padding）。
+   *
+   * 转换步骤：
+   *   1. 按比例缩放：scaleX = paperBounds.width / templateWidth
+   *   2. 平移：加上 paperBounds.x / paperBounds.y 偏移（纸张左上角的画布坐标）
+   *
+   * 如果未启用纸张效果（paperBounds 为 null），返回原元素不变。
+   */
+  private adjustElementToPaperBounds(element: ResumeElement, templateCanvasSize?: { width: number; height: number }): ResumeElement {
+    const paperBounds = this.editor.getPaperBounds()
+    if (paperBounds === null) {
+      return element
+    }
+
+    // 模板参考尺寸：优先使用传入的 canvasSize，否则默认 A4 @ 96dpi
+    const templateWidth = templateCanvasSize?.width ?? 794
+    const templateHeight = templateCanvasSize?.height ?? 1123
+
+    // 按纸张尺寸缩放（保持比例）
+    const scaleX = paperBounds.width / templateWidth
+    const scaleY = paperBounds.height / templateHeight
+
+    return {
+      ...element,
+      x: paperBounds.x + element.x * scaleX,
+      y: paperBounds.y + element.y * scaleY,
+      width: element.width * scaleX,
+      height: element.height * scaleY,
+    }
+  }
+
+  /**
    * 应用模板到画布（快速应用模式）
    */
   applyTemplate(templateId: string): boolean {
@@ -70,7 +105,8 @@ export class TemplateManager {
     // 创建模板中的所有元素
     const elements = template.elements || []
     elements.forEach((element) => {
-      this.editor.createElement(element, { id: element.id })
+      const adjustedElement = this.adjustElementToPaperBounds(element, template.canvasSize)
+      this.editor.createElement(adjustedElement, { id: adjustedElement.id })
     })
 
     return true
@@ -78,14 +114,17 @@ export class TemplateManager {
 
   /**
    * 应用元素列表到画布
+   * @param elements 元素列表
+   * @param templateCanvasSize 模板参考画布尺寸，用于坐标映射
    */
-  applyElements(elements: ResumeElement[]): void {
+  applyElements(elements: ResumeElement[], templateCanvasSize?: { width: number; height: number }): void {
     // 清空当前画布
     this.editor.clearCanvas()
 
     // 创建所有元素
     elements.forEach((element) => {
-      this.editor.createElement(element, { id: element.id })
+      const adjustedElement = this.adjustElementToPaperBounds(element, templateCanvasSize)
+      this.editor.createElement(adjustedElement, { id: adjustedElement.id })
     })
   }
 

@@ -6,9 +6,11 @@ import type { ResumeTemplate, ResumeElement } from '@resume-editor/shared'
 
 /**
  * 生成 SVG 缩略图的辅助函数
+ * 包含 A4 纸张效果：浅灰背景 + 白色纸张 + 阴影
  */
-const createSvgThumbnail = (svgContent: string): string => {
-  return `data:image/svg+xml,${encodeURIComponent(svgContent)}`
+const createSvgThumbnail = (content: string): string => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="260" viewBox="0 0 200 260"><defs><filter id="paperShadow" x="-5%" y="-5%" width="110%" height="110%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.12"/></filter></defs><rect fill="#e8e8e8" width="200" height="260"/><g filter="url(#paperShadow)"><rect fill="#fafafa" x="10" y="8" width="180" height="244" rx="2"/></g><g transform="translate(10, 8)">${content}</g></svg>`
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }
 
 /**
@@ -19,46 +21,31 @@ export const minimalTemplate: ResumeTemplate = {
   name: '简约简历',
   description: '极简设计，大量留白，突出内容',
   category: 'minimal',
-  canvasSize: { width: 800, height: 1000 },
+  // A4 标准尺寸 @ 96dpi
+  canvasSize: { width: 794, height: 1123 },
   thumbnail: createSvgThumbnail(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="260" viewBox="0 0 200 260">
-      <defs>
-        <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1"/>
-        </filter>
-      </defs>
-      <!-- 背景 - 大量留白 -->
-      <rect fill="#ffffff" width="200" height="260" rx="8" filter="url(#shadow)"/>
-
-      <!-- 姓名标题 -->
-      <rect fill="#1a1a1a" x="20" y="25" width="60" height="14" rx="2"/>
-      <rect fill="#666" x="20" y="45" width="80" height="6" rx="1"/>
-
-      <!-- 短分隔线 -->
-      <rect fill="#1a1a1a" x="20" y="62" width="30" height="2" rx="1"/>
-
-      <!-- 联系信息 -->
-      <rect fill="#999" x="20" y="75" width="160" height="4" rx="1"/>
-
-      <!-- 关于我区块 -->
-      <rect fill="#1a1a1a" x="20" y="100" width="35" height="5" rx="1"/>
-      <rect fill="#333" x="20" y="112" width="160" height="3" rx="1"/>
-      <rect fill="#666" x="20" y="120" width="150" height="3" rx="1"/>
-
-      <!-- 工作经历区块 -->
-      <rect fill="#1a1a1a" x="20" y="145" width="50" height="5" rx="1"/>
-      <rect fill="#333" x="20" y="157" width="160" height="3" rx="1"/>
-      <rect fill="#666" x="20" y="165" width="140" height="3" rx="1"/>
-      <rect fill="#666" x="20" y="173" width="155" height="3" rx="1"/>
-
-      <!-- 技能区块 -->
-      <rect fill="#1a1a1a" x="20" y="195" width="50" height="5" rx="1"/>
-      <rect fill="#333" x="20" y="207" width="160" height="3" rx="1"/>
-
-      <!-- 分类标签 -->
-      <rect fill="#1abc9c" x="20" y="235" width="35" height="14" rx="3" opacity="0.15"/>
-      <text x="37" y="246" font-size="8" fill="#1abc9c" text-anchor="middle" font-family="Arial">简约</text>
-    </svg>
+    <!-- 姓名标题 -->
+    <rect fill="#1a1a1a" x="10" y="15" width="55" height="12" rx="2"/>
+    <rect fill="#666" x="10" y="32" width="70" height="5" rx="1"/>
+    <!-- 短分隔线 -->
+    <rect fill="#1a1a1a" x="10" y="48" width="25" height="2" rx="1"/>
+    <!-- 联系信息 -->
+    <rect fill="#999" x="10" y="60" width="150" height="3" rx="1"/>
+    <!-- 关于我区块 -->
+    <rect fill="#1a1a1a" x="10" y="78" width="30" height="4" rx="1"/>
+    <rect fill="#333" x="10" y="88" width="150" height="3" rx="1"/>
+    <rect fill="#666" x="10" y="95" width="140" height="3" rx="1"/>
+    <!-- 工作经历区块 -->
+    <rect fill="#1a1a1a" x="10" y="115" width="45" height="4" rx="1"/>
+    <rect fill="#333" x="10" y="125" width="150" height="3" rx="1"/>
+    <rect fill="#666" x="10" y="132" width="130" height="3" rx="1"/>
+    <rect fill="#666" x="10" y="139" width="145" height="3" rx="1"/>
+    <!-- 技能区块 -->
+    <rect fill="#1a1a1a" x="10" y="160" width="45" height="4" rx="1"/>
+    <rect fill="#333" x="10" y="170" width="150" height="3" rx="1"/>
+    <!-- 分类标签 -->
+    <rect fill="#1abc9c" x="10" y="195" width="30" height="12" rx="2" opacity="0.15"/>
+    <text x="25" y="204" font-size="7" fill="#1abc9c" text-anchor="middle" font-family="Arial">简约</text>
   `),
   createdAt: Date.now(),
   updatedAt: Date.now(),
@@ -257,57 +244,40 @@ export const minimalTwoColumnTemplate: ResumeTemplate = {
   name: '双栏简约',
   description: '双栏布局，信息密度适中',
   category: 'minimal',
-  canvasSize: { width: 800, height: 1000 },
+  // A4 标准尺寸 @ 96dpi
+  canvasSize: { width: 794, height: 1123 },
   thumbnail: createSvgThumbnail(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="260" viewBox="0 0 200 260">
-      <defs>
-        <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1"/>
-        </filter>
-      </defs>
-      <!-- 背景 -->
-      <rect fill="#ffffff" width="200" height="260" rx="8" filter="url(#shadow)"/>
-
-      <!-- 姓名标题 -->
-      <rect fill="#2d3436" x="15" y="20" width="70" height="12" rx="2"/>
-      <rect fill="#636e72" x="15" y="38" width="50" height="5" rx="1"/>
-
-      <!-- 右侧联系信息 -->
-      <rect fill="#636e72" x="100" y="35" width="85" height="4" rx="1" opacity="0.6"/>
-
-      <!-- 分隔线 -->
-      <rect fill="#dfe6e9" x="15" y="52" width="170" height="1" rx="0.5"/>
-
-      <!-- 左栏 -->
-      <rect fill="#2d3436" x="15" y="68" width="50" height="5" rx="1"/>
-      <rect fill="#2d3436" x="15" y="80" width="70" height="3" rx="1"/>
-      <rect fill="#636e72" x="15" y="88" width="65" height="3" rx="1" opacity="0.6"/>
-      <rect fill="#636e72" x="15" y="96" width="70" height="3" rx="1" opacity="0.6"/>
-      <rect fill="#636e72" x="15" y="104" width="60" height="3" rx="1" opacity="0.6"/>
-
-      <rect fill="#2d3436" x="15" y="125" width="70" height="3" rx="1"/>
-      <rect fill="#2d3436" x="15" y="133" width="65" height="3" rx="1" opacity="0.8"/>
-      <rect fill="#636e72" x="15" y="141" width="70" height="3" rx="1" opacity="0.6"/>
-      <rect fill="#636e72" x="15" y="149" width="60" height="3" rx="1" opacity="0.6"/>
-
-      <!-- 右栏 -->
-      <rect fill="#2d3436" x="105" y="68" width="50" height="5" rx="1"/>
-      <rect fill="#636e72" x="105" y="80" width="80" height="3" rx="1" opacity="0.6"/>
-      <rect fill="#636e72" x="105" y="88" width="75" height="3" rx="1" opacity="0.6"/>
-      <rect fill="#636e72" x="105" y="96" width="80" height="3" rx="1" opacity="0.6"/>
-
-      <rect fill="#2d3436" x="105" y="118" width="50" height="5" rx="1"/>
-      <rect fill="#636e72" x="105" y="130" width="80" height="3" rx="1" opacity="0.6"/>
-      <rect fill="#636e72" x="105" y="138" width="75" height="3" rx="1" opacity="0.6"/>
-      <rect fill="#636e72" x="105" y="146" width="70" height="3" rx="1" opacity="0.6"/>
-
-      <!-- 中间分隔线 -->
-      <rect fill="#dfe6e9" x="97" y="60" width="1" height="100" rx="0.5"/>
-
-      <!-- 分类标签 -->
-      <rect fill="#1abc9c" x="15" y="235" width="35" height="14" rx="3" opacity="0.15"/>
-      <text x="32" y="246" font-size="8" fill="#1abc9c" text-anchor="middle" font-family="Arial">简约</text>
-    </svg>
+    <!-- 姓名标题 -->
+    <rect fill="#2d3436" x="5" y="10" width="60" height="10" rx="2"/>
+    <rect fill="#636e72" x="5" y="25" width="45" height="4" rx="1"/>
+    <!-- 右侧联系信息 -->
+    <rect fill="#636e72" x="90" y="22" width="75" height="3" rx="1" opacity="0.6"/>
+    <!-- 分隔线 -->
+    <rect fill="#dfe6e9" x="5" y="38" width="155" height="1" rx="0.5"/>
+    <!-- 左栏 -->
+    <rect fill="#2d3436" x="5" y="50" width="45" height="4" rx="1"/>
+    <rect fill="#2d3436" x="5" y="60" width="60" height="3" rx="1"/>
+    <rect fill="#636e72" x="5" y="68" width="55" height="2" rx="1" opacity="0.6"/>
+    <rect fill="#636e72" x="5" y="75" width="60" height="2" rx="1" opacity="0.6"/>
+    <rect fill="#636e72" x="5" y="82" width="50" height="2" rx="1" opacity="0.6"/>
+    <rect fill="#2d3436" x="5" y="100" width="60" height="3" rx="1"/>
+    <rect fill="#2d3436" x="5" y="108" width="55" height="2" rx="1" opacity="0.8"/>
+    <rect fill="#636e72" x="5" y="115" width="60" height="2" rx="1" opacity="0.6"/>
+    <rect fill="#636e72" x="5" y="122" width="50" height="2" rx="1" opacity="0.6"/>
+    <!-- 右栏 -->
+    <rect fill="#2d3436" x="92" y="50" width="45" height="4" rx="1"/>
+    <rect fill="#636e72" x="92" y="60" width="70" height="2" rx="1" opacity="0.6"/>
+    <rect fill="#636e72" x="92" y="68" width="65" height="2" rx="1" opacity="0.6"/>
+    <rect fill="#636e72" x="92" y="75" width="70" height="2" rx="1" opacity="0.6"/>
+    <rect fill="#2d3436" x="92" y="95" width="45" height="4" rx="1"/>
+    <rect fill="#636e72" x="92" y="105" width="70" height="2" rx="1" opacity="0.6"/>
+    <rect fill="#636e72" x="92" y="112" width="65" height="2" rx="1" opacity="0.6"/>
+    <rect fill="#636e72" x="92" y="119" width="60" height="2" rx="1" opacity="0.6"/>
+    <!-- 中间分隔线 -->
+    <rect fill="#dfe6e9" x="85" y="42" width="1" height="90" rx="0.5"/>
+    <!-- 分类标签 -->
+    <rect fill="#1abc9c" x="5" y="195" width="30" height="12" rx="2" opacity="0.15"/>
+    <text x="20" y="204" font-size="7" fill="#1abc9c" text-anchor="middle" font-family="Arial">简约</text>
   `),
   createdAt: Date.now(),
   updatedAt: Date.now(),

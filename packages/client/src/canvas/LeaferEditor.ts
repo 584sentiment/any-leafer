@@ -45,6 +45,26 @@ export interface DotMatrixConfig {
 }
 
 /**
+ * A4 纸张效果配置
+ */
+export interface PaperEffectConfig {
+  /** 是否启用纸张效果 */
+  enabled: boolean
+  /** 纸张填充色 */
+  fillColor?: string
+  /** 阴影颜色 */
+  shadowColor?: string
+  /** 阴影模糊度 */
+  shadowBlur?: number
+  /** 阴影 Y 偏移 */
+  shadowOffsetY?: number
+  /** 内容边距 */
+  padding?: number
+  /** 宽高比（A4 = 210/297 ≈ 0.707） */
+  aspectRatio?: number
+}
+
+/**
  * LeaferEditor 配置
  */
 export interface LeaferEditorConfig {
@@ -64,6 +84,8 @@ export interface LeaferEditorConfig {
   snapThreshold?: number
   /** 点阵配置 */
   dotMatrix?: DotMatrixConfig
+  /** 纸张效果配置 */
+  paperEffect?: PaperEffectConfig
   /** 元素创建回调 */
   onElementCreated?: (elementId: string) => void
   /** 元素更新回调（拖动、缩放、旋转结束） */
@@ -91,6 +113,11 @@ export class LeaferEditor {
   private elementsMap: Map<string, UI> = new Map()
   private container: HTMLElement
   private dotMatrix: DotMatrix | null = null
+
+  // 纸张效果相关
+  private paperElement: Rect | null = null
+  private paperContentBounds: { x: number; y: number; width: number; height: number } | null = null
+  private static readonly PAPER_ID = '__paper_background__'
 
   // 平移模式相关
   private isPanModeEnabled: boolean = false
@@ -173,6 +200,11 @@ export class LeaferEditor {
           this.setupDotMatrix()
         }
 
+        // 配置纸张效果
+        if (this.config.paperEffect?.enabled) {
+          this.setupPaperEffect()
+        }
+
         // 添加键盘事件监听
         document.addEventListener('keydown', this.boundHandleKeyDown)
 
@@ -214,6 +246,117 @@ export class LeaferEditor {
       minSize: dotConfig.minSize ?? 0.1,
     })
     this.dotMatrix.enableDotMatrix(true)
+  }
+
+  /**
+   * 配置纸张效果
+   */
+  private setupPaperEffect(): void {
+    if (!this.app?.tree) return
+
+    const config = this.config.paperEffect!
+
+    const canvasWidth = this.config.width
+    const canvasHeight = this.config.height
+    const aspectRatio = config.aspectRatio ?? 210 / 297
+    const margin = 20 // 纸张与画布边缘的间距
+
+    // 计算可用空间
+    const availableWidth = canvasWidth - margin * 2
+    const availableHeight = canvasHeight - margin * 2
+
+    // 根据 A4 比例计算纸张尺寸
+    let paperWidth: number
+    let paperHeight: number
+
+    if (availableWidth / availableHeight > aspectRatio) {
+      // 高度受限
+      paperHeight = availableHeight
+      paperWidth = paperHeight * aspectRatio
+    } else {
+      // 宽度受限
+      paperWidth = availableWidth
+      paperHeight = paperWidth / aspectRatio
+    }
+
+    // 居中放置
+    const paperX = (canvasWidth - paperWidth) / 2
+    const paperY = (canvasHeight - paperHeight) / 2
+
+    // 创建纸张矩形
+    this.paperElement = new Rect({
+      id: LeaferEditor.PAPER_ID,
+      x: paperX,
+      y: paperY,
+      width: paperWidth,
+      height: paperHeight,
+      fill: config.fillColor || '#ffffff',
+      cornerRadius: 2,
+      shadow: {
+        x: 0,
+        y: config.shadowOffsetY ?? 4,
+        blur: config.shadowBlur ?? 12,
+        color: config.shadowColor || 'rgba(0,0,0,0.15)',
+        box: true,
+      },
+      editable: false,
+      moveable: false,
+      resizable: false,
+      zIndex: -1, // 确保在所有元素下方
+    })
+
+    // 添加到画布最底层
+    this.app.tree.add(this.paperElement)
+
+    // 添加到元素映射（但不触发创建回调）
+    this.elementsMap.set(LeaferEditor.PAPER_ID, this.paperElement)
+
+    // 计算内容区域
+    const padding = config.padding ?? 40
+    this.paperContentBounds = {
+      x: paperX + padding,
+      y: paperY + padding,
+      width: paperWidth - padding * 2,
+      height: paperHeight - padding * 2,
+    }
+  }
+
+  /**
+   * 获取纸张内容区域
+   */
+  getPaperContentBounds(): { x: number; y: number; width: number; height: number } | null {
+    return this.paperContentBounds
+  }
+
+  /**
+   * 设置纸张内容区域（用于测试或程序化设置）
+   */
+  setPaperContentBounds(bounds: { x: number; y: number; width: number; height: number } | null): void {
+    this.paperContentBounds = bounds
+  }
+
+  /**
+   * 获取纸张尺寸
+   */
+  getPaperSize(): { width: number; height: number } | null {
+    if (!this.paperElement) return null
+    return {
+      width: this.paperElement.width || 0,
+      height: this.paperElement.height || 0,
+    }
+  }
+
+  /**
+   * 获取纸张完整边界（含位置）
+   */
+  getPaperBounds(): { x: number; y: number; width: number; height: number } | null {
+    if (!this.paperElement) return null
+    return {
+      x: this.paperElement.x || 0,
+      y: this.paperElement.y || 0,
+      width: this.paperElement.width || 0,
+      height: this.paperElement.height || 0,
+    }
   }
 
   /**
@@ -640,9 +783,9 @@ export class LeaferEditor {
    * 获取画布状态（供 AI 使用）
    */
   getCanvasState(): CanvasState {
-    const elements = this.getAllElements().map((el) =>
-      this.convertToResumeElement(el)
-    )
+    const elements = this.getAllElements()
+      .filter((el) => el.id !== LeaferEditor.PAPER_ID) // 排除纸张背景
+      .map((el) => this.convertToResumeElement(el))
 
     const viewport: ViewportState = {
       x: 0,
@@ -655,10 +798,29 @@ export class LeaferEditor {
     // 获取选中的元素
     const selection = this.getSelectedElementIds()
 
+    // 添加纸张信息
+    const paper = this.paperElement
+      ? {
+          bounds: {
+            x: this.paperElement.x || 0,
+            y: this.paperElement.y || 0,
+            width: this.paperElement.width || 0,
+            height: this.paperElement.height || 0,
+          },
+          contentBounds: this.paperContentBounds || {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+          },
+        }
+      : null
+
     return {
       elements,
       viewport,
       selection,
+      paper,
     }
   }
 
@@ -666,6 +828,19 @@ export class LeaferEditor {
    * 将 Leafer 元素转换为 ResumeElement
    */
   private convertToResumeElement(el: UI): ResumeElement {
+    // 跳过纸张背景元素
+    if (el.id === LeaferEditor.PAPER_ID) {
+      return {
+        id: el.id,
+        type: 'rect',
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        fill: '#ffffff',
+      } as RectElement
+    }
+
     const base = {
       id: el.id || '',
       x: el.x || 0,
@@ -782,13 +957,23 @@ export class LeaferEditor {
   }
 
   /**
-   * 清空画布
+   * 清空画布（保留纸张背景）
    */
   clearCanvas(): void {
     if (!this.app?.tree) return
 
-    this.elementsMap.forEach((el) => el.remove())
+    // 删除所有元素，但保留纸张背景
+    this.elementsMap.forEach((el) => {
+      if (el.id !== LeaferEditor.PAPER_ID) {
+        el.remove()
+      }
+    })
+    // 清空元素映射，但保留纸张背景的映射
+    const paperEl = this.elementsMap.get(LeaferEditor.PAPER_ID)
     this.elementsMap.clear()
+    if (paperEl) {
+      this.elementsMap.set(LeaferEditor.PAPER_ID, paperEl)
+    }
   }
 
   /**
@@ -822,7 +1007,9 @@ export class LeaferEditor {
    * 获取画布快照
    */
   getSnapshot(): ResumeElement[] {
-    return this.getAllElements().map((el) => this.convertToResumeElement(el))
+    return this.getAllElements()
+      .filter((el) => el.id !== LeaferEditor.PAPER_ID) // 排除纸张背景
+      .map((el) => this.convertToResumeElement(el))
   }
 
   /**

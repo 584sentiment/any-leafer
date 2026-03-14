@@ -8,11 +8,11 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react'
-import { LeaferEditor, LeaferEditorConfig, DotMatrixConfig } from './LeaferEditor'
+import { LeaferEditor, LeaferEditorConfig, DotMatrixConfig, PaperEffectConfig } from './LeaferEditor'
 import type { ResumeElement, CanvasState, ExportOptions } from '@resume-editor/shared'
 
-// 重新导出 DotMatrixConfig 以便外部使用
-export type { DotMatrixConfig }
+// 重新导出配置类型以便外部使用
+export type { DotMatrixConfig, PaperEffectConfig }
 
 /**
  * LeaferCanvas 组件属性
@@ -22,8 +22,12 @@ export interface LeaferCanvasProps {
   width?: number | string
   /** 画布高度（数字或 '100%'） */
   height?: number | string
-  /** 背景色 */
+  /** 背景色（桌面背景色，启用纸张效果时） */
   backgroundColor?: string
+  /** 是否启用纸张效果 */
+  paperEffect?: boolean
+  /** 纸张效果详细配置 */
+  paperEffectConfig?: Partial<PaperEffectConfig>
   /** 是否启用编辑器 */
   editable?: boolean
   /** 是否启用吸附 */
@@ -98,7 +102,9 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
     const {
       width = '100%',
       height = '100%',
-      backgroundColor = '#ffffff',
+      backgroundColor = '#e8e8e8',
+      paperEffect = false,
+      paperEffectConfig,
       editable = true,
       snap = true,
       dotMatrix,
@@ -162,6 +168,18 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
         editable,
         snap,
         dotMatrix,
+        paperEffect: paperEffect
+          ? {
+              enabled: true,
+              fillColor: '#ffffff',
+              shadowColor: 'rgba(0,0,0,0.15)',
+              shadowBlur: 12,
+              shadowOffsetY: 4,
+              padding: 40,
+              aspectRatio: 210 / 297,
+              ...paperEffectConfig,
+            }
+          : undefined,
         onElementCreated: (elementId: string) => {
           onElementCreatedRef.current?.(elementId)
         },
@@ -222,6 +240,7 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
               height: container?.clientHeight ?? 600,
             },
             selection: [],
+            paper: null,
           }
         )
       },
@@ -301,9 +320,7 @@ export const LeaferCanvas = forwardRef<LeaferCanvasRef, LeaferCanvasProps>(
           width,
           height,
           overflow: 'hidden',
-          border: '1px solid #e0e0e0',
-          borderRadius: 4,
-          backgroundColor,
+          backgroundColor: paperEffect ? backgroundColor : '#ffffff',
           ...style,
         }}
       />

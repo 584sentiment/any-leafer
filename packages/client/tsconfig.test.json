@@ -1,15 +1,14 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "baseUrl": ".",
     "paths": {
       "@resume-editor/templates": ["../templates/src/index.ts"],
       "@resume-editor/shared": ["../shared/src/index.ts"]
-    }
+    },
+    "noEmit": true
   },
   "include": ["src/**/*", "../templates/src/**/*", "../shared/src/**/*"]
 }

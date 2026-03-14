@@ -229,6 +229,7 @@ export const useEditorStore = create<EditorState>()(
         elements: state.elements,
         viewport: state.viewport,
         selection: state.selection,
+        paper: null, // store 中不存储纸张信息，需要从 editor 获取
       }
     },
   }))

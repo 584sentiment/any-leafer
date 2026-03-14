@@ -70,6 +70,17 @@ export class AgentContextManager {
     description += `- 元素总数: ${state.elements.length}\n`
     description += `- 选中元素: ${selectedElements.length}个\n`
 
+    // 添加纸张信息描述
+    if (state.paper) {
+      const { bounds, contentBounds } = state.paper
+      description += `\n## 纸张信息\n`
+      description += `- 纸张位置: (${Math.round(bounds.x)}, ${Math.round(bounds.y)})\n`
+      description += `- 纸张尺寸: ${Math.round(bounds.width)} x ${Math.round(bounds.height)}\n`
+      description += `- 内容区域起始: (${Math.round(contentBounds.x)}, ${Math.round(contentBounds.y)})\n`
+      description += `- 内容区域尺寸: ${Math.round(contentBounds.width)} x ${Math.round(contentBounds.height)}\n`
+      description += `\n**重要**: 创建元素时，坐标应相对于画布左上角（绝对坐标）。元素应放置在内容区域内，即 x >= ${Math.round(contentBounds.x)}, y >= ${Math.round(contentBounds.y)}, x + width <= ${Math.round(contentBounds.x + contentBounds.width)}, y + height <= ${Math.round(contentBounds.y + contentBounds.height)}\n`
+    }
+
     // 列出所有元素的详细信息（关键：让 AI 知道每个元素的 ID 和属性）
     if (state.elements.length > 0) {
       description += `\n## 画布上的所有元素\n`

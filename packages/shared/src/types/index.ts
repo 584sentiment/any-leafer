@@ -204,6 +204,16 @@ export interface ViewportState {
 }
 
 /**
+ * 纸张状态
+ */
+export interface PaperState {
+  /** 纸张在画布中的位置和尺寸 */
+  bounds: { x: number; y: number; width: number; height: number }
+  /** 内容区域（扣除 padding 后的区域） */
+  contentBounds: { x: number; y: number; width: number; height: number }
+}
+
+/**
  * 画布状态（供 AI 上下文使用）
  */
 export interface CanvasState {
@@ -213,6 +223,8 @@ export interface CanvasState {
   viewport: ViewportState
   /** 选中的元素 ID */
   selection: string[]
+  /** 纸张信息（启用纸张效果时） */
+  paper: PaperState | null
 }
 
 // ============ 模板类型 ============

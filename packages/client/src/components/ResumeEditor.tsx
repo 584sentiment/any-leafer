@@ -6,6 +6,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { LeaferCanvas, LeaferCanvasRef, DotMatrixConfig } from '../canvas/LeaferCanvas'
 import { LeaferAgent, LeaferAgentState } from '../agent/LeaferAgent'
+import { TemplateManager } from '../agent/managers/TemplateManager'
 import { ChatPanel } from './ChatPanel'
 import { ElementToolbar, ToolConfig } from './ElementToolbar'
 import type {
@@ -38,6 +39,8 @@ export interface ResumeEditorProps {
   initialTemplateId?: string
   /** 初始渲染的元素列表（智能生成模式） */
   initialElements?: ResumeElement[]
+  /** 是否显示纸张效果 */
+  paperEffect?: boolean
   /** 自定义类名 */
   className?: string
   /** 自定义样式 */
@@ -55,6 +58,7 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
   dotMatrix = { enabled: true },
   initialTemplateId,
   initialElements,
+  paperEffect = true,
   className,
   style,
 }) => {
@@ -230,25 +234,25 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
     // 等待编辑器初始化完成
     if (!isEditorReady || !canvasRef.current) return
 
+    const editor = canvasRef.current.getEditor()
+    if (!editor) return
+
     // 优先使用初始元素（智能生成模式）
     if (initialElements && initialElements.length > 0) {
-      initialElements.forEach((element) => {
-        canvasRef.current?.createElement(element)
-      })
-      // 保存历史记录
+      const templateManager = new TemplateManager({ editor, templates })
+      // 使用 applyElements 以便坐标映射生效
+      templateManager.applyElements(initialElements)
       agentRef.current?.saveHistory('应用智能生成模板')
       return
     }
 
     // 使用初始模板（快速应用模式）
     if (initialTemplateId && templates.length > 0) {
-      const template = templates.find((t) => t.id === initialTemplateId)
-      if (template?.elements && template.elements.length > 0) {
-        template.elements.forEach((element) => {
-          canvasRef.current?.createElement(element)
-        })
-        // 保存历史记录
-        agentRef.current?.saveHistory(`应用模板: ${template.name}`)
+      const templateManager = new TemplateManager({ editor, templates })
+      const applied = templateManager.applyTemplate(initialTemplateId)
+      if (applied) {
+        const template = templates.find((t) => t.id === initialTemplateId)
+        agentRef.current?.saveHistory(`应用模板: ${template?.name ?? initialTemplateId}`)
       }
     }
   }, [isEditorReady, initialTemplateId, initialElements, templates])
@@ -338,7 +342,17 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
             ref={canvasRef}
             width={canvasWidth}
             height={canvasHeight}
-            backgroundColor="#ffffff"
+            backgroundColor="#e8e8e8"
+            paperEffect={paperEffect}
+            paperEffectConfig={{
+              enabled: paperEffect,
+              fillColor: '#ffffff',
+              shadowColor: 'rgba(0,0,0,0.15)',
+              shadowBlur: 12,
+              shadowOffsetY: 4,
+              padding: 40,
+              aspectRatio: 210 / 297,
+            }}
             editable
             snap
             dotMatrix={dotMatrix}

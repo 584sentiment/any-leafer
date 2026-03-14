@@ -31,7 +31,9 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "lint": "eslint src --ext .ts,.tsx"
+    "lint": "eslint src --ext .ts,.tsx",
+    "test": "vitest --run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@leafer-in/editor": "^1.4.0",
@@ -41,6 +43,7 @@
     "@leafer-in/view": "^1.4.0",
     "@leafer-in/viewport": "^2.0.3",
     "@resume-editor/shared": "workspace:*",
+    "@resume-editor/templates": "workspace:*",
     "leafer-ui": "^1.4.0",
     "leafer-x-dotwuxian": "^0.0.3",
     "lucide-react": "^0.577.0",
@@ -55,9 +58,13 @@
     "@types/react-dom": "^18.3.0",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "@vitest/ui": "^2.1.8",
+    "fast-check": "^3.23.1",
+    "happy-dom": "^15.11.7",
     "typescript": "^5.7.0",
     "vite": "^6.0.0",
-    "vite-plugin-dts": "^4.3.0"
+    "vite-plugin-dts": "^4.3.0",
+    "vitest": "^2.1.8"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

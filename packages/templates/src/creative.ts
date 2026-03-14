@@ -333,7 +333,7 @@ export const creativeGradientTemplate: ResumeTemplate = {
   createdAt: Date.now(),
   updatedAt: Date.now(),
   elements: [
-    // 左侧渐变背景（用矩形模拟）
+    // 左侧渐变背景（撑满整个纸张高度）
     {
       id: 'sidebar-bg-1',
       type: 'rect',
@@ -366,9 +366,9 @@ export const creativeGradientTemplate: ResumeTemplate = {
     {
       id: 'name-title',
       type: 'heading',
-      x: 50,
+      x: 30,
       y: 170,
-      width: 180,
+      width: 220,
       height: 40,
       content: '周八',
       fontSize: 28,
@@ -376,15 +376,15 @@ export const creativeGradientTemplate: ResumeTemplate = {
       fontWeight: 'bold',
       fontStyle: 'normal',
       fill: '#ffffff',
-      textAlign: 'center',
+      textAlign: 'left',
     },
     // 职位
     {
       id: 'position',
       type: 'text',
-      x: 50,
+      x: 30,
       y: 215,
-      width: 180,
+      width: 220,
       height: 25,
       content: '数据科学家',
       fontSize: 14,
@@ -392,7 +392,7 @@ export const creativeGradientTemplate: ResumeTemplate = {
       fontWeight: 'normal',
       fontStyle: 'normal',
       fill: '#dfe6e9',
-      textAlign: 'center',
+      textAlign: 'left',
     },
     // 左侧联系信息标题
     {

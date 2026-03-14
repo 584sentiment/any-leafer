@@ -183,13 +183,16 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             return (
               <div
                 key={template.id}
+                data-testid="preview-card"
                 onClick={() => onTemplateSelect(template)}
                 onMouseEnter={() => setHoveredTemplate(template.id)}
                 onMouseLeave={() => setHoveredTemplate(null)}
                 style={{
                   cursor: 'pointer',
-                  borderRadius: 12,
+                  aspectRatio: '200 / 260',
+                  position: 'relative',
                   overflow: 'hidden',
+                  borderRadius: 12,
                   border: isSelected
                     ? '3px solid #3498db'
                     : isHovered
@@ -202,81 +205,87 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   backgroundColor: '#fff',
                 }}
               >
-                {/* 缩略图 */}
+                {/* 缩略图层 - 绝对定位铺满整个卡片 */}
                 <div
+                  data-testid="thumbnail-layer"
                   style={{
-                    width: '100%',
-                    height: 180,
+                    position: 'absolute',
+                    inset: 0,
                     backgroundImage: `url("${getThumbnail(template)}")`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    position: 'relative',
+                  }}
+                />
+
+                {/* OverlayPanel - 悬停时从底部滑入 */}
+                <div
+                  data-testid="overlay-panel"
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    transform: isHovered ? 'translateY(0)' : 'translateY(100%)',
+                    transition: 'transform 0.25s ease',
+                    background: 'rgba(0,0,0,0.65)',
+                    padding: '12px 14px',
                   }}
                 >
-                  {isSelected && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 8,
-                        right: 8,
-                        width: 24,
-                        height: 24,
-                        borderRadius: '50%',
-                        backgroundColor: '#3498db',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="3"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-
-                {/* 信息 */}
-                <div style={{ padding: '12px 14px' }}>
+                  {/* 模板名称 */}
                   <div
                     style={{
-                      fontSize: 14,
                       fontWeight: 600,
-                      color: '#212529',
-                      marginBottom: 4,
+                      color: '#fff',
+                      fontSize: 14,
                     }}
                   >
                     {template.name}
                   </div>
+                  {/* 分类标签 */}
                   <div
+                    data-testid="category-tag"
                     style={{
-                      fontSize: 12,
-                      color: '#6c757d',
-                      marginBottom: 8,
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {template.description}
-                  </div>
-                  <span
-                    style={{
+                      marginTop: 4,
                       display: 'inline-block',
-                      padding: '2px 8px',
-                      fontSize: 11,
-                      borderRadius: 4,
-                      backgroundColor: CATEGORY_INFO[template.category].color + '20',
+                      backgroundColor: CATEGORY_INFO[template.category].color + '33',
                       color: CATEGORY_INFO[template.category].color,
+                      fontSize: 11,
+                      padding: '2px 8px',
+                      borderRadius: 10,
                     }}
                   >
                     {CATEGORY_INFO[template.category].name}
-                  </span>
+                  </div>
                 </div>
+
+                {/* SelectionBadge - 选中时显示 */}
+                {isSelected && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      backgroundColor: '#3498db',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="3"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                )}
               </div>
             )
           })}

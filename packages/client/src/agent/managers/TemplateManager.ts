@@ -61,7 +61,7 @@ export class TemplateManager {
    * 将模板元素坐标（相对于模板 canvasSize 的 0,0 原点）映射到纸张的画布绝对坐标。
    *
    * 模板坐标系：以模板 canvasSize（如 794×1123）为参考，从 (0,0) 开始，
-   * 对应纸张左上角（不含 padding）。
+   * 对应纸张左上角（含 padding 区域），即纸张物理边缘。
    *
    * 转换步骤：
    *   1. 按比例缩放：scaleX = paperBounds.width / templateWidth
@@ -79,7 +79,7 @@ export class TemplateManager {
     const templateWidth = templateCanvasSize?.width ?? 794
     const templateHeight = templateCanvasSize?.height ?? 1123
 
-    // 按纸张尺寸缩放（保持比例）
+    // 按纸张物理边界缩放（x:0,y:0 对应纸张左上角，无 padding 偏移）
     const scaleX = paperBounds.width / templateWidth
     const scaleY = paperBounds.height / templateHeight
 
